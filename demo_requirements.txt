@@ -1,0 +1,6 @@
+# Python dependencies for run_demo.py
+httpx>=0.25.0
+google-generativeai>=0.3.0
+python-dotenv>=1.0.0
+supabase>=2.0.0
+rich>=13.0.0
