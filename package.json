@@ -35,8 +35,8 @@
     "typecheck": "tsc --noEmit",
     "analyze": "ANALYZE=true npm run build",
     "setup": "node scripts/setup.js",
-    "deploy:production": "scripts\\deploy-production.bat",
-    "build:production": "set NODE_ENV=production&& npm run build"
+    "deploy:production": "scripts/deploy-production.sh",
+    "build:production": "NODE_ENV=production npm run build"
   },
   "dependencies": {
     "@braintree/sanitize-url": "^7.1.1",

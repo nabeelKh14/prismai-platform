@@ -14,14 +14,15 @@ const updateArticleSchema = z.object({
 // GET: Fetch single knowledge base article
 export const GET = withErrorHandling(async (
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) => {
   const supabase = await createClient()
+  const { id } = await params
 
   const { data: article, error } = await supabase
     .from('knowledge_base')
     .select('*')
-    .eq('id', params.id)
+    .eq('id', id)
     .single()
 
   if (error) {
@@ -40,9 +41,10 @@ export const GET = withErrorHandling(async (
 // PUT: Update knowledge base article
 export const PUT = withErrorHandling(async (
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) => {
   const supabase = await createClient()
+  const { id } = await params
   const body = await request.json()
   const validatedData = updateArticleSchema.parse(body)
 
@@ -50,7 +52,7 @@ export const PUT = withErrorHandling(async (
   const { data: currentArticle } = await supabase
     .from('knowledge_base')
     .select('title, content')
-    .eq('id', params.id)
+    .eq('id', id)
     .single()
 
   const { data: article, error } = await supabase
@@ -59,7 +61,7 @@ export const PUT = withErrorHandling(async (
       ...validatedData,
       updated_at: new Date().toISOString()
     })
-    .eq('id', params.id)
+    .eq('id', id)
     .select()
     .single()
 
@@ -102,14 +104,15 @@ export const PUT = withErrorHandling(async (
 // DELETE: Delete knowledge base article
 export const DELETE = withErrorHandling(async (
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) => {
   const supabase = await createClient()
+  const { id } = await params
 
   const { error } = await supabase
     .from('knowledge_base')
     .delete()
-    .eq('id', params.id)
+    .eq('id', id)
 
   if (error) {
     if (error.code === 'PGRST116') {

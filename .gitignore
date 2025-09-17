@@ -155,3 +155,5 @@ todo.md
 # Temporary files
 *.tmp
 *.temp
+
+.vercel

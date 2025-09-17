@@ -10,11 +10,12 @@ import { logger } from '@/lib/logger'
 
 export async function GET(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
     const supabase = await createClient()
     const { data: { user }, error: authError } = await supabase.auth.getUser()
+    const { id } = await params
 
     if (authError || !user) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
@@ -41,7 +42,7 @@ export async function GET(
         )
       `)
       .eq('user_id', user.id)
-      .eq('id', params.id)
+      .eq('id', id)
       .single()
 
     if (error) {
@@ -68,11 +69,12 @@ export async function GET(
 
 export async function PUT(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
     const supabase = await createClient()
     const { data: { user }, error: authError } = await supabase.auth.getUser()
+    const { id } = await params
 
     if (authError || !user) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
@@ -96,7 +98,7 @@ export async function PUT(
       .from('leads')
       .select('*')
       .eq('user_id', user.id)
-      .eq('id', params.id)
+      .eq('id', id)
       .single()
 
     if (fetchError) {
@@ -141,7 +143,7 @@ export async function PUT(
       .from('leads')
       .update(updateData)
       .eq('user_id', user.id)
-      .eq('id', params.id)
+      .eq('id', id)
       .select()
       .single()
 
@@ -154,7 +156,7 @@ export async function PUT(
     await supabase
       .from('lead_activities')
       .insert({
-        lead_id: params.id,
+        lead_id: id,
         type: 'lead_updated',
         description: 'Lead information updated',
         metadata: {
@@ -179,11 +181,12 @@ export async function PUT(
 
 export async function DELETE(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
     const supabase = await createClient()
     const { data: { user }, error: authError } = await supabase.auth.getUser()
+    const { id } = await params
 
     if (authError || !user) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
@@ -193,7 +196,7 @@ export async function DELETE(
       .from('leads')
       .delete()
       .eq('user_id', user.id)
-      .eq('id', params.id)
+      .eq('id', id)
 
     if (error) {
       logger.error('Error deleting lead:', error)

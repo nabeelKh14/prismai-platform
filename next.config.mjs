@@ -1,5 +1,8 @@
 /** @type {import('next').NextConfig} */
 const nextConfig = {
+  // Output configuration for Vercel deployment
+  output: 'standalone',
+
   // Build optimizations
   eslint: {
     ignoreDuringBuilds: true,
