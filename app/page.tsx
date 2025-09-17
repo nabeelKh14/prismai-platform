@@ -1146,7 +1146,7 @@ export default function HomePage() {
                   </Link>
                 </li>
                 <li>
-                  <Link href="/integrations" className="text-gray-300 hover:text-cyan-400 transition-colors duration-300 flex items-center gap-2 group">
+                  <Link href="/developer-portal" className="text-gray-300 hover:text-cyan-400 transition-colors duration-300 flex items-center gap-2 group">
                     <span className="w-1 h-1 bg-cyan-400 rounded-full opacity-0 group-hover:opacity-100 transition-opacity"></span>
                     Integrations
                   </Link>
@@ -1175,18 +1175,6 @@ export default function HomePage() {
                     Contact
                   </Link>
                 </li>
-                <li>
-                  <Link href="/careers" className="text-gray-300 hover:text-pink-400 transition-colors duration-300 flex items-center gap-2 group">
-                    <span className="w-1 h-1 bg-pink-400 rounded-full opacity-0 group-hover:opacity-100 transition-opacity"></span>
-                    Careers
-                  </Link>
-                </li>
-                <li>
-                  <Link href="/blog" className="text-gray-300 hover:text-pink-400 transition-colors duration-300 flex items-center gap-2 group">
-                    <span className="w-1 h-1 bg-pink-400 rounded-full opacity-0 group-hover:opacity-100 transition-opacity"></span>
-                    Blog
-                  </Link>
-                </li>
               </ul>
             </div>
 
@@ -1194,7 +1182,7 @@ export default function HomePage() {
               <h3 className="font-bold mb-6 text-white text-lg">Support</h3>
               <ul className="space-y-3">
                 <li>
-                  <Link href="/help" className="text-gray-300 hover:text-cyan-400 transition-colors duration-300 flex items-center gap-2 group">
+                  <Link href="/docs" className="text-gray-300 hover:text-cyan-400 transition-colors duration-300 flex items-center gap-2 group">
                     <span className="w-1 h-1 bg-cyan-400 rounded-full opacity-0 group-hover:opacity-100 transition-opacity"></span>
                     Help Center
                   </Link>
