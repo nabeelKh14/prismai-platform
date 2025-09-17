@@ -1,6 +1,6 @@
 import { geminiClient } from './gemini-client'
 import { VAPIClient } from './vapi-client'
-import { createClient } from '@/lib/supabase/server'
+import { createClient } from '@/lib/supabase/client'
 import { logger } from '@/lib/logger'
 
 export interface MultiModalInput {

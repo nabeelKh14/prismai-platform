@@ -1,5 +1,5 @@
-import { createBrowserClient } from "@supabase/ssr"
-import { requireEnv } from "@/lib/env"
+import { createBrowserClient } from '@supabase/ssr'
+import { requireEnv } from '@/lib/env'
 
 export function createClient() {
   return createBrowserClient(

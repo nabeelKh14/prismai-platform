@@ -1,4 +1,4 @@
-import { createClient } from '@/lib/supabase/server'
+import { createClient } from '@/lib/supabase/client'
 import { multiModalHandler } from './multi-modal-handler'
 import { syncOrchestrator } from './synchronization-orchestrator'
 import { logger } from '@/lib/logger'

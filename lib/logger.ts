@@ -1,5 +1,11 @@
 import { getEnv, isProduction } from '@/lib/env'
-import { createClient } from '@/lib/supabase/server'
+
+import { createClient as createBrowserClient } from '@/lib/supabase/client'
+
+// Function to get the Supabase client (client-side only for logging)
+async function getSupabaseClient() {
+  return createBrowserClient()
+}
 
 type LogLevel = 'debug' | 'info' | 'warn' | 'error'
 
@@ -161,7 +167,10 @@ class Logger {
     options?: Parameters<Logger['log']>[3]
   ): Promise<void> {
     try {
-      const supabase = await createClient()
+      const supabase = await getSupabaseClient()
+
+      // Skip database logging if client is not available (e.g., client-side)
+      if (!supabase) return
 
       const logEntry = {
         level,
@@ -214,7 +223,10 @@ class Logger {
     if (!this.enableAuditLogging) return
 
     try {
-      const supabase = await createClient()
+      const supabase = await getSupabaseClient()
+
+      // Skip audit logging if client is not available (e.g., client-side)
+      if (!supabase) return
 
       const auditEntry = {
         user_id: entry.userId,
