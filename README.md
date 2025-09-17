@@ -326,4 +326,4 @@ This project is licensed under the MIT License - see the [LICENSE](LICENSE) file
 <div align="center">
   <p>Built with ❤️ to refract business potential through AI</p>
   <p>⭐ Star this repo if you find it helpful!</p>
-</div>
+</div>"# Deployment fix applied" 
