@@ -22,8 +22,10 @@ const nextConfig = {
       '@radix-ui/react-icons',
       'lucide-react',
     ],
-    serverComponentsExternalPackages: ['@supabase/supabase-js'],
   },
+
+  // Server external packages
+  serverExternalPackages: ['@supabase/supabase-js'],
   
   // Compression
   compress: true,
