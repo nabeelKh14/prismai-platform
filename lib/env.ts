@@ -1,50 +1,56 @@
 import { z } from 'zod'
 
-const envSchema = z.object({
+const publicEnvSchema = z.object({
   // Node.js Environment
   NODE_ENV: z.enum(['development', 'production', 'test']).default('development'),
-  
+
   // Application URLs
   NEXT_PUBLIC_APP_URL: z.string().url(),
-  
-  // Supabase Configuration (Required)
+
+  // Supabase Configuration (Public)
   NEXT_PUBLIC_SUPABASE_URL: z.string().url(),
   NEXT_PUBLIC_SUPABASE_ANON_KEY: z.string().min(1),
-  SUPABASE_SERVICE_ROLE_KEY: z.string().min(1),
-  
-  // AI Services (Required)
-  GEMINI_API_KEY: z.string().min(1),
-  VAPI_API_KEY: z.string().min(1),
-  
+
   // Optional Analytics
   VERCEL_ANALYTICS_ID: z.string().optional(),
   SENTRY_DSN: z.string().url().optional().or(z.literal('')),
-  
+
+  // Performance & Monitoring (Public)
+  LOG_LEVEL: z.enum(['error', 'warn', 'info', 'debug']).default('info'),
+  ENABLE_REQUEST_LOGGING: z.coerce.boolean().default(false),
+})
+
+const serverEnvSchema = publicEnvSchema.extend({
+  // Supabase Configuration (Server)
+  SUPABASE_SERVICE_ROLE_KEY: z.string().min(1),
+
+  // AI Services (Required)
+  GEMINI_API_KEY: z.string().min(1),
+  VAPI_API_KEY: z.string().min(1),
+
   // Optional Email Service
   RESEND_API_KEY: z.string().optional(),
   SMTP_HOST: z.string().optional(),
   SMTP_PORT: z.coerce.number().optional(),
   SMTP_USER: z.string().optional(),
   SMTP_PASS: z.string().optional(),
-  
+
   // Security
   JWT_SECRET: z.string().min(32).optional(),
   ENCRYPTION_KEY: z.string().min(32).optional(),
   WEBHOOK_SECRET: z.string().optional(),
-  
+
   // Optional Redis/Caching
   UPSTASH_REDIS_REST_URL: z.string().url().optional().or(z.literal('')),
   UPSTASH_REDIS_REST_TOKEN: z.string().optional(),
   REDIS_URL: z.string().url().optional().or(z.literal('')),
-  
+
   // Performance & Monitoring
   DATABASE_CONNECTION_LIMIT: z.coerce.number().default(20),
-  LOG_LEVEL: z.enum(['error', 'warn', 'info', 'debug']).default('info'),
-  ENABLE_REQUEST_LOGGING: z.coerce.boolean().default(false),
   HEALTH_CHECK_TOKEN: z.string().optional(),
 })
 
-export type Env = z.infer<typeof envSchema>
+export type Env = z.infer<typeof serverEnvSchema>
 
 class EnvValidationError extends Error {
   constructor(message: string, public errors: z.ZodError) {
@@ -54,30 +60,35 @@ class EnvValidationError extends Error {
 }
 
 function validateEnv(): Env {
+  const isBrowser = typeof window !== 'undefined'
+  const schema = isBrowser ? publicEnvSchema : serverEnvSchema
+
   try {
-    return envSchema.parse(process.env)
+    const parsed = schema.parse(process.env)
+    // In browser, cast to Env (server vars will be undefined)
+    return parsed as Env
   } catch (error) {
     if (error instanceof z.ZodError) {
       const missingVars = error.errors
         .filter(err => err.code === 'invalid_type' && err.received === 'undefined')
         .map(err => err.path.join('.'))
-      
+
       const invalidVars = error.errors
         .filter(err => err.code !== 'invalid_type' || err.received !== 'undefined')
         .map(err => `${err.path.join('.')}: ${err.message}`)
-      
+
       let errorMessage = 'Environment validation failed:'
-      
+
       if (missingVars.length > 0) {
         errorMessage += ' Missing: ' + missingVars.join(', ')
       }
-      
+
       if (invalidVars.length > 0) {
         errorMessage += ' Invalid: ' + invalidVars.join(', ')
       }
-      
+
       errorMessage += ' Please check your .env file'
-      
+
       throw new EnvValidationError(errorMessage, error)
     }
     throw error
@@ -97,7 +108,7 @@ try {
     throw new Error(`Environment validation failed: ${error instanceof EnvValidationError ? error.message : String(error)}`)
   }
   // In test environment, provide defaults
-  env = envSchema.parse({
+  env = serverEnvSchema.parse({
     NODE_ENV: 'test',
     NEXT_PUBLIC_APP_URL: 'http://localhost:3000',
     NEXT_PUBLIC_SUPABASE_URL: 'http://localhost:54321',
