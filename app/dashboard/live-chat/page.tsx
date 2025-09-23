@@ -12,6 +12,7 @@ import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, Di
 import { ScrollArea } from "@/components/ui/scroll-area"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import { MessageSquare, Users, Clock, AlertCircle, Send, UserPlus, ArrowRight, Phone, Smartphone, Globe, Zap } from "lucide-react"
+import DotGrid from '@/components/DotGrid'
 import { useToast } from "@/hooks/use-toast"
 
 interface Conversation {
@@ -338,6 +339,19 @@ export default function LiveChatPage() {
 
   return (
     <div className="container mx-auto px-4 py-8">
+      {/* Interactive dot-grid background */}
+      <DotGrid
+        dotSize={2}
+        gap={24}
+        baseColor="#00ffff"
+        activeColor="#ffffff"
+        proximity={120}
+        speedTrigger={50}
+        shockRadius={200}
+        shockStrength={3}
+        className="fixed inset-0 z-0"
+        style={{ opacity: 0.6 }}
+      />
       <div className="mb-8">
         <h1 className="text-3xl font-bold mb-2">Live Chat Dashboard</h1>
         <p className="text-muted-foreground">Manage real-time customer conversations and agent assignments</p>

@@ -24,28 +24,26 @@ export const POST = withErrorHandling(async (request: NextRequest) => {
   const body = await request.json()
   const { phoneNumber, assistantId } = initiateCallSchema.parse(body)
 
-    // Make call using VAPI
-    const vapiResponse = await fetch("https://api.vapi.ai/call", {
+    // Make call using ElevenLabs
+    const elevenLabsResponse = await fetch("https://api.elevenlabs.io/v1/convai/conversations", {
       method: "POST",
       headers: {
-        Authorization: `Bearer ${requireEnv('VAPI_API_KEY')}`,
+        "xi-api-key": String(requireEnv('VAPI_API_KEY')),
         "Content-Type": "application/json",
       },
       body: JSON.stringify({
-        assistantId,
-        customer: {
-          number: phoneNumber,
-        },
+        agent_id: assistantId,
+        phone_number: phoneNumber,
       }),
     })
 
-    if (!vapiResponse.ok) {
-      const errorText = await vapiResponse.text()
-      console.error('VAPI call initiation failed:', errorText)
-      throw new ExternalServiceError('VAPI', `Failed to initiate call: ${vapiResponse.statusText}`)
+    if (!elevenLabsResponse.ok) {
+      const errorText = await elevenLabsResponse.text()
+      console.error('ElevenLabs call initiation failed:', errorText)
+      throw new ExternalServiceError('ElevenLabs', `Failed to initiate call: ${elevenLabsResponse.statusText}`)
     }
 
-    const callResult = await vapiResponse.json()
+    const callResult = await elevenLabsResponse.json()
 
     // Log the call in database
     const { error: logError } = await supabase.from("call_logs").insert({
@@ -62,7 +60,7 @@ export const POST = withErrorHandling(async (request: NextRequest) => {
 
     return NextResponse.json({
       success: true,
-      callId: callResult.id,
-      status: callResult.status,
+      callId: callResult.conversation_id,
+      status: "ringing",
     })
 })

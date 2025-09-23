@@ -8,6 +8,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
 import { Progress } from '@/components/ui/progress'
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert'
 import { RefreshCw, Activity, Database, Shield, Zap, AlertTriangle, CheckCircle, XCircle, Clock } from 'lucide-react'
+import DotGrid from '@/components/DotGrid'
 import { useToast } from '@/hooks/use-toast'
 
 interface HealthStatus {
@@ -212,6 +213,19 @@ export default function MonitoringDashboard() {
 
   return (
     <div className="space-y-6">
+      {/* Interactive dot-grid background */}
+      <DotGrid
+        dotSize={2}
+        gap={24}
+        baseColor="#00ffff"
+        activeColor="#ffffff"
+        proximity={120}
+        speedTrigger={50}
+        shockRadius={200}
+        shockStrength={3}
+        className="fixed inset-0 z-0"
+        style={{ opacity: 0.6 }}
+      />
       <div className="flex items-center justify-between">
         <div>
           <h1 className="text-3xl font-bold">System Monitoring</h1>

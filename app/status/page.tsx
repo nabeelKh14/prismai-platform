@@ -7,6 +7,7 @@ import { Button } from '@/components/ui/button'
 import { Progress } from '@/components/ui/progress'
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert'
 import { CheckCircle, XCircle, AlertTriangle, Clock, RefreshCw, Activity, Database, Shield, Zap, Globe } from 'lucide-react'
+import DotGrid from '@/components/DotGrid'
 
 interface SystemStatus {
   status: 'healthy' | 'degraded' | 'unhealthy'
@@ -144,6 +145,20 @@ export default function StatusPage() {
 
   return (
     <div className="min-h-screen bg-gray-50">
+      {/* Interactive dot-grid background */}
+      <DotGrid
+        dotSize={2}
+        gap={24}
+        baseColor="#00ffff"
+        activeColor="#ffffff"
+        proximity={120}
+        speedTrigger={50}
+        shockRadius={200}
+        shockStrength={3}
+        className="fixed inset-0 z-0"
+        style={{ opacity: 0.6 }}
+      />
+
       <div className="max-w-4xl mx-auto px-4 py-8">
         {/* Header */}
         <div className="text-center mb-8">

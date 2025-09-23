@@ -30,6 +30,29 @@
       },
       "disabled": false,
       "alwaysAllow": []
+    },
+    "context7": {
+      "command": "npx",
+      "args": [
+        "-y",
+        "@upstash/context7-mcp"
+      ],
+      "env": {
+        "DEFAULT_MINIMUM_TOKENS": ""
+      },
+      "alwaysAllow": [
+        "get-library-docs"
+      ]
+    },
+    "brave-search": {
+      "command": "npx",
+      "args": [
+        "-y",
+        "@modelcontextprotocol/server-brave-search"
+      ],
+      "env": {
+        "BRAVE_API_KEY": "jina_8de98519b5aa4ab7843ae682d7218363lpP8T2uEazLMOI3Fip-myurFOhmI"
+      }
     }
   }
 }

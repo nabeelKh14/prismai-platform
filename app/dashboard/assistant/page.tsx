@@ -7,6 +7,7 @@ import { Label } from "@/components/ui/label"
 import { Textarea } from "@/components/ui/textarea"
 import { Switch } from "@/components/ui/switch"
 import { MessageSquare, Settings, Phone, Zap } from "lucide-react"
+import DotGrid from '@/components/DotGrid'
 
 export default async function AssistantPage() {
   const supabase = await createClient()
@@ -26,6 +27,19 @@ export default async function AssistantPage() {
 
   return (
     <div className="p-6 space-y-6">
+      {/* Interactive dot-grid background */}
+      <DotGrid
+        dotSize={2}
+        gap={24}
+        baseColor="#00ffff"
+        activeColor="#ffffff"
+        proximity={120}
+        speedTrigger={50}
+        shockRadius={200}
+        shockStrength={3}
+        className="fixed inset-0 z-0"
+        style={{ opacity: 0.6 }}
+      />
       <div>
         <h1 className="text-3xl font-bold mb-2">AI Assistant</h1>
         <p className="text-muted-foreground">Configure your AI receptionist's personality and behavior</p>

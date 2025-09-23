@@ -11,11 +11,11 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { Separator } from "@/components/ui/separator"
 import { Badge } from "@/components/ui/badge"
-import { 
-  Settings as SettingsIcon, 
-  User, 
-  Bell, 
-  Shield, 
+import {
+  Settings as SettingsIcon,
+  User,
+  Bell,
+  Shield,
   CreditCard,
   Phone,
   Mail,
@@ -24,6 +24,7 @@ import {
   Save,
   AlertTriangle
 } from "lucide-react"
+import DotGrid from '@/components/DotGrid'
 
 export default function SettingsPage() {
   const [loading, setLoading] = useState(false)
@@ -74,6 +75,19 @@ export default function SettingsPage() {
 
   return (
     <div className="container mx-auto p-6 space-y-6">
+      {/* Interactive dot-grid background */}
+      <DotGrid
+        dotSize={2}
+        gap={24}
+        baseColor="#00ffff"
+        activeColor="#ffffff"
+        proximity={120}
+        speedTrigger={50}
+        shockRadius={200}
+        shockStrength={3}
+        className="fixed inset-0 z-0"
+        style={{ opacity: 0.6 }}
+      />
       {/* Header */}
       <div className="flex items-center justify-between">
         <div>

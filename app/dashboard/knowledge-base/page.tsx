@@ -30,6 +30,7 @@ import {
   XCircle
 } from "lucide-react"
 import { cn } from "@/lib/utils"
+import DotGrid from '@/components/DotGrid'
 
 interface KnowledgeArticle {
   id: string
@@ -221,6 +222,19 @@ export default function KnowledgeBasePage() {
 
   return (
     <div className="container mx-auto p-6 space-y-6">
+      {/* Interactive dot-grid background */}
+      <DotGrid
+        dotSize={2}
+        gap={24}
+        baseColor="#00ffff"
+        activeColor="#ffffff"
+        proximity={120}
+        speedTrigger={50}
+        shockRadius={200}
+        shockStrength={3}
+        className="fixed inset-0 z-0"
+        style={{ opacity: 0.6 }}
+      />
       {/* Header */}
       <div className="flex items-center justify-between">
         <div>

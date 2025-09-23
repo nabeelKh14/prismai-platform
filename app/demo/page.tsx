@@ -13,6 +13,7 @@ import { ConversationDisplay } from "@/components/demo/conversation-display"
 import { MetricsDashboard } from "@/components/demo/metrics-dashboard"
 import { ScenarioSelector } from "@/components/demo/scenario-selector"
 import { demoController } from "@/lib/ai/demo-controller"
+import DotGrid from '@/components/DotGrid'
 
 export default function DemoPage() {
   const [activeTab, setActiveTab] = useState<'scenarios' | 'interactive'>('scenarios')
@@ -200,6 +201,20 @@ export default function DemoPage() {
       {/* Premium Background Effects */}
       <div className="absolute inset-0 gradient-premium opacity-20" />
       <div className="absolute inset-0 bg-gradient-to-br from-cyan-500/8 via-transparent to-pink-500/8" />
+
+      {/* Interactive dot-grid background */}
+      <DotGrid
+        dotSize={2}
+        gap={24}
+        baseColor="#00ffff"
+        activeColor="#ffffff"
+        proximity={120}
+        speedTrigger={50}
+        shockRadius={200}
+        shockStrength={3}
+        className="fixed inset-0 z-0"
+        style={{ opacity: 0.6 }}
+      />
 
       <div className="container mx-auto px-4 sm:px-6 lg:px-8 py-12 relative z-10">
         {/* Premium Hero Section */}

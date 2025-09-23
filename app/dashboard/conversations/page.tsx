@@ -4,6 +4,7 @@ import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { MessageSquare, Phone, Smartphone, Globe, Clock, User, TrendingUp, TrendingDown, Minus, AlertTriangle, Smile, Frown, Meh } from "lucide-react"
+import DotGrid from '@/components/DotGrid'
 
 export default async function ConversationsPage() {
   const supabase = await createClient()
@@ -221,6 +222,19 @@ export default async function ConversationsPage() {
 
   return (
     <div className="container mx-auto px-4 py-8">
+      {/* Interactive dot-grid background */}
+      <DotGrid
+        dotSize={2}
+        gap={24}
+        baseColor="#00ffff"
+        activeColor="#ffffff"
+        proximity={120}
+        speedTrigger={50}
+        shockRadius={200}
+        shockStrength={3}
+        className="fixed inset-0 z-0"
+        style={{ opacity: 0.6 }}
+      />
       <div className="mb-8">
         <h1 className="text-3xl font-bold mb-2">Conversations</h1>
         <p className="text-muted-foreground">Monitor and manage customer conversations across all channels</p>

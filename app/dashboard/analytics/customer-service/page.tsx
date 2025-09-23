@@ -10,6 +10,7 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 import { Progress } from "@/components/ui/progress"
 import { Calendar, Download, TrendingUp, TrendingDown, BarChart3, PieChart, Users, Clock, MessageSquare, Star } from "lucide-react"
 import { useToast } from "@/hooks/use-toast"
+import DotGrid from '@/components/DotGrid'
 
 interface AnalyticsData {
   totalConversations: number
@@ -131,6 +132,19 @@ export default function CustomerServiceAnalyticsPage() {
 
   return (
     <div className="container mx-auto px-4 py-8">
+      {/* Interactive dot-grid background */}
+      <DotGrid
+        dotSize={2}
+        gap={24}
+        baseColor="#00ffff"
+        activeColor="#ffffff"
+        proximity={120}
+        speedTrigger={50}
+        shockRadius={200}
+        shockStrength={3}
+        className="fixed inset-0 z-0"
+        style={{ opacity: 0.6 }}
+      />
       <div className="mb-8">
         <div className="flex items-center justify-between">
           <div>

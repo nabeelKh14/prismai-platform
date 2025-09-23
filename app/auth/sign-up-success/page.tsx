@@ -1,11 +1,28 @@
+'use client';
+
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Crown, Mail, CheckCircle, ArrowRight, Sparkles } from "lucide-react"
 import Link from "next/link"
+import DotGrid from '@/components/DotGrid'
 
 export default function SignUpSuccessPage() {
   return (
     <div className="min-h-screen relative overflow-hidden" style={{ backgroundColor: '#0B0B0D' }}>
+      {/* Interactive dot-grid background */}
+      <DotGrid
+        dotSize={2}
+        gap={24}
+        baseColor="#00ffff"
+        activeColor="#ffffff"
+        proximity={120}
+        speedTrigger={50}
+        shockRadius={200}
+        shockStrength={3}
+        className="fixed inset-0 z-0"
+        style={{ opacity: 0.6 }}
+      />
+
       {/* Premium Background Effects */}
       <div className="absolute inset-0 bg-gradient-to-br from-cyan-500/20 via-purple-500/10 to-pink-500/20" />
       <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_top,_var(--tw-gradient-stops))] from-green-400/20 via-transparent to-cyan-400/20" />

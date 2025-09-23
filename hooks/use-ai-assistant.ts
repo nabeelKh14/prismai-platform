@@ -10,7 +10,7 @@ interface AIConfig {
   greeting_message: string
   business_hours: Record<string, any>
   services: string[]
-  vapi_assistant_id?: string
+  elevenlabs_agent_id?: string
   vapi_phone_number?: string
 }
 
@@ -67,7 +67,7 @@ export function useAIAssistant() {
   }
 
   const makeCall = async (phoneNumber: string) => {
-    if (!config?.vapi_assistant_id) {
+    if (!config?.elevenlabs_agent_id) {
       throw new Error("AI assistant not configured")
     }
 
@@ -79,7 +79,7 @@ export function useAIAssistant() {
         },
         body: JSON.stringify({
           phoneNumber,
-          assistantId: config.vapi_assistant_id,
+          assistantId: config.elevenlabs_agent_id,
         }),
       })
 

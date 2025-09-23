@@ -1,7 +1,10 @@
+'use client';
+
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Phone, AlertTriangle } from "lucide-react"
 import Link from "next/link"
+import DotGrid from '@/components/DotGrid'
 
 export default async function AuthErrorPage({
   searchParams,
@@ -25,6 +28,19 @@ export default async function AuthErrorPage({
 
   return (
     <div className="min-h-screen bg-gradient-to-b from-background to-muted/20 flex items-center justify-center p-6">
+      {/* Interactive dot-grid background */}
+      <DotGrid
+        dotSize={2}
+        gap={24}
+        baseColor="#00ffff"
+        activeColor="#ffffff"
+        proximity={120}
+        speedTrigger={50}
+        shockRadius={200}
+        shockStrength={3}
+        className="fixed inset-0 z-0"
+        style={{ opacity: 0.6 }}
+      />
       <div className="w-full max-w-md">
         {/* Header */}
         <div className="text-center mb-8">

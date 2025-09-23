@@ -13,6 +13,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Checkbox } from "@/components/ui/checkbox"
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
 import { Plus, Edit, Trash2, Send, BarChart3, Users, MessageSquare, Star } from "lucide-react"
+import DotGrid from '@/components/DotGrid'
 import { useToast } from "@/hooks/use-toast"
 
 interface SurveyTemplate {
@@ -352,6 +353,19 @@ export default function SurveysPage() {
   if (loading) {
     return (
       <div className="container mx-auto px-4 py-8">
+        {/* Interactive dot-grid background */}
+        <DotGrid
+          dotSize={2}
+          gap={24}
+          baseColor="#00ffff"
+          activeColor="#ffffff"
+          proximity={120}
+          speedTrigger={50}
+          shockRadius={200}
+          shockStrength={3}
+          className="fixed inset-0 z-0"
+          style={{ opacity: 0.6 }}
+        />
         <div className="flex items-center justify-center h-64">
           <div className="text-center">
             <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary mx-auto mb-4"></div>

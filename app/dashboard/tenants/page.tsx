@@ -13,6 +13,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Textarea } from '@/components/ui/textarea'
 import { toast } from 'sonner'
 import { Plus, Users, Settings, Crown, UserPlus, Mail, Calendar } from 'lucide-react'
+import DotGrid from '@/components/DotGrid'
 
 interface Tenant {
   id: string
@@ -187,6 +188,19 @@ export default function TenantManagementPage() {
 
   return (
     <div className="container mx-auto p-6 space-y-6">
+      {/* Interactive dot-grid background */}
+      <DotGrid
+        dotSize={2}
+        gap={24}
+        baseColor="#00ffff"
+        activeColor="#ffffff"
+        proximity={120}
+        speedTrigger={50}
+        shockRadius={200}
+        shockStrength={3}
+        className="fixed inset-0 z-0"
+        style={{ opacity: 0.6 }}
+      />
       <div className="flex items-center justify-between">
         <div>
           <h1 className="text-3xl font-bold">Tenant Management</h1>

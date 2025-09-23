@@ -6,6 +6,7 @@ import 'swagger-ui-react/swagger-ui.css'
 
 // Dynamically import SwaggerUI to avoid SSR issues
 const SwaggerUI = dynamic(() => import('swagger-ui-react'), { ssr: false })
+import DotGrid from '@/components/DotGrid'
 
 export default function ApiDocsPage() {
   const [spec, setSpec] = useState<any>(null)
@@ -31,6 +32,20 @@ export default function ApiDocsPage() {
 
   return (
     <div className="min-h-screen bg-background">
+      {/* Interactive dot-grid background */}
+      <DotGrid
+        dotSize={2}
+        gap={24}
+        baseColor="#00ffff"
+        activeColor="#ffffff"
+        proximity={120}
+        speedTrigger={50}
+        shockRadius={200}
+        shockStrength={3}
+        className="fixed inset-0 z-0"
+        style={{ opacity: 0.6 }}
+      />
+
       <div className="container mx-auto py-8">
         <div className="mb-8">
           <h1 className="text-3xl font-bold mb-2">PrismAI API Documentation</h1>

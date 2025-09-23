@@ -2,6 +2,7 @@ import { redirect } from "next/navigation"
 import { createClient } from "@/lib/supabase/server"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { BarChart3, TrendingUp, Phone, Clock } from "lucide-react"
+import DotGrid from '@/components/DotGrid'
 
 export default async function AnalyticsPage() {
   const supabase = await createClient()
@@ -46,6 +47,19 @@ export default async function AnalyticsPage() {
 
   return (
     <div className="p-6 space-y-6">
+      {/* Interactive dot-grid background */}
+      <DotGrid
+        dotSize={2}
+        gap={24}
+        baseColor="#00ffff"
+        activeColor="#ffffff"
+        proximity={120}
+        speedTrigger={50}
+        shockRadius={200}
+        shockStrength={3}
+        className="fixed inset-0 z-0"
+        style={{ opacity: 0.6 }}
+      />
       <div>
         <h1 className="text-3xl font-bold mb-2">Analytics</h1>
         <p className="text-muted-foreground">Detailed insights into your AI receptionist performance</p>

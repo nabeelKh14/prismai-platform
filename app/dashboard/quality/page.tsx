@@ -13,6 +13,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
 import { Progress } from "@/components/ui/progress"
 import { Plus, Star, AlertTriangle, CheckCircle, TrendingUp, Users, MessageSquare } from "lucide-react"
+import DotGrid from '@/components/DotGrid'
 import { useToast } from "@/hooks/use-toast"
 
 interface QualityCriteria {
@@ -161,6 +162,19 @@ export default function QualityPage() {
 
   return (
     <div className="container mx-auto px-4 py-8">
+      {/* Interactive dot-grid background */}
+      <DotGrid
+        dotSize={2}
+        gap={24}
+        baseColor="#00ffff"
+        activeColor="#ffffff"
+        proximity={120}
+        speedTrigger={50}
+        shockRadius={200}
+        shockStrength={3}
+        className="fixed inset-0 z-0"
+        style={{ opacity: 0.6 }}
+      />
       <div className="mb-8">
         <div className="flex items-center justify-between">
           <div>

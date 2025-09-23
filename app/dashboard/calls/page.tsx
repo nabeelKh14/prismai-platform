@@ -5,6 +5,7 @@ import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Phone, Clock, MessageSquare } from "lucide-react"
+import DotGrid from '@/components/DotGrid'
 
 export default async function CallsPage() {
   const supabase = await createClient()
@@ -26,6 +27,19 @@ export default async function CallsPage() {
 
   return (
     <div className="p-6 space-y-6">
+      {/* Interactive dot-grid background */}
+      <DotGrid
+        dotSize={2}
+        gap={24}
+        baseColor="#00ffff"
+        activeColor="#ffffff"
+        proximity={120}
+        speedTrigger={50}
+        shockRadius={200}
+        shockStrength={3}
+        className="fixed inset-0 z-0"
+        style={{ opacity: 0.6 }}
+      />
       <div className="flex justify-between items-center">
         <div>
           <h1 className="text-3xl font-bold mb-2">Call Logs</h1>

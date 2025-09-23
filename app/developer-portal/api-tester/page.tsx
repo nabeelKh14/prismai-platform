@@ -11,6 +11,7 @@ import { Badge } from '@/components/ui/badge'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
 import { Alert, AlertDescription } from '@/components/ui/alert'
 import { Play, Copy, Check, X, Loader2 } from 'lucide-react'
+import DotGrid from '@/components/DotGrid'
 import { toast } from 'sonner'
 
 interface ApiResponse {
@@ -145,6 +146,19 @@ export default function ApiTesterPage() {
 
   return (
     <div className="space-y-6">
+      {/* Interactive dot-grid background */}
+      <DotGrid
+        dotSize={2}
+        gap={24}
+        baseColor="#00ffff"
+        activeColor="#ffffff"
+        proximity={120}
+        speedTrigger={50}
+        shockRadius={200}
+        shockStrength={3}
+        className="fixed inset-0 z-0"
+        style={{ opacity: 0.6 }}
+      />
       <div className="flex items-center justify-between">
         <div>
           <h1 className="text-3xl font-bold">API Tester</h1>

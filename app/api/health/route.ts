@@ -264,7 +264,7 @@ class HealthChecker {
         environment: !!process.env.NODE_ENV,
         database_url: !!process.env.NEXT_PUBLIC_SUPABASE_URL,
         supabase_key: !!process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY,
-        jwt_secret: !!process.env.SUPABASE_JWT_SECRET
+        jwt_secret: !!process.env.JWT_SECRET
       }
 
       const missingConfigs = Object.entries(checks)

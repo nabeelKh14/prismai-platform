@@ -1,7 +1,10 @@
+'use client';
+
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
 import { CallDemo } from "@/components/ai/call-demo"
+import TiltedCard from "@/components/TiltedCard"
 import {
   Phone,
   Brain,
@@ -22,6 +25,7 @@ import {
   TrendingUp,
   Award,
   Lock,
+  Mail,
   PhoneCall,
   X,
   ChevronDown,
@@ -31,6 +35,7 @@ import {
 } from "lucide-react"
 import Link from "next/link"
 import Image from "next/image"
+import DotGrid from '@/components/DotGrid'
 
 export default function HomePage() {
   return (
@@ -47,13 +52,13 @@ export default function HomePage() {
             </div>
 
             <div className="hidden md:flex items-center space-x-8">
-              <Link href="#features" className="text-gray-300 hover:text-cyan-400 transition-colors duration-200">
+              <Link href="/features" className="text-gray-300 hover:text-cyan-400 transition-colors duration-200">
                 Features
               </Link>
               <Link href="/demo" className="text-gray-300 hover:text-cyan-400 transition-colors duration-200">
                 Demo
               </Link>
-              <Link href="#pricing" className="text-gray-300 hover:text-cyan-400 transition-colors duration-200">
+              <Link href="/pricing" className="text-gray-300 hover:text-cyan-400 transition-colors duration-200">
                 Pricing
               </Link>
               <Link href="/auth/login" className="text-gray-300 hover:text-white transition-colors duration-200">
@@ -70,6 +75,20 @@ export default function HomePage() {
         </div>
       </nav>
 
+      {/* Interactive dot-grid background */}
+      <DotGrid
+        dotSize={2}
+        gap={24}
+        baseColor="#00ffff"
+        activeColor="#ffffff"
+        proximity={120}
+        speedTrigger={50}
+        shockRadius={200}
+        shockStrength={3}
+        className="fixed inset-0 z-0"
+        style={{ opacity: 0.6 }}
+      />
+
       {/* Hero Section */}
       <section className="py-24 lg:py-40 relative overflow-hidden" style={{backgroundColor: '#0B0B0D'}}>
         {/* Premium Background Effects */}
@@ -81,6 +100,7 @@ export default function HomePage() {
         <div className="absolute top-20 left-10 w-32 h-32 bg-cyan-500/10 rounded-full blur-xl animate-float" />
         <div className="absolute bottom-20 right-10 w-40 h-40 bg-pink-500/8 rounded-full blur-2xl animate-float" style={{animationDelay: '2s'}} />
         <div className="absolute top-1/2 left-1/4 w-24 h-24 bg-cyan-500/5 rounded-full blur-lg animate-float" style={{animationDelay: '4s'}} />
+
 
         <div className="container mx-auto px-4 sm:px-6 lg:px-8 relative z-10">
           <div className="text-center max-w-6xl mx-auto">
@@ -94,19 +114,19 @@ export default function HomePage() {
             {/* Main Headline */}
             <h1 className="premium-heading text-5xl md:text-7xl lg:text-8xl text-balance leading-tight mb-8 text-white animate-fade-in-up" style={{animationDelay: '0.2s'}}>
               <span className="text-gradient">
-                PrismAI
+                AI Voice Agents
               </span>
-              {" "}Intelligent Business Automation Platform
+              {" "}for Every Business Need
             </h1>
 
             {/* Subheadline */}
             <p className="premium-subheading text-xl md:text-2xl text-gray-300 text-pretty leading-relaxed max-w-4xl mx-auto mb-10 animate-fade-in-up" style={{animationDelay: '0.4s'}}>
-              Refract your business potential through AI with comprehensive automation, intelligent customer service, and seamless integrations.
+              Transform your customer interactions with intelligent voice agents that handle receptionist duties, customer service, and chatbot conversations 24/7.
             </p>
 
             {/* Supporting line */}
             <p className="text-lg text-gray-400 mb-16 max-w-3xl mx-auto animate-fade-in-up" style={{animationDelay: '0.6s'}}>
-              Transform your business operations with AI-powered automation that delivers precision, efficiency, and exceptional customer experiences.
+              From receptionist to customer service to intelligent chatbots - our AI voice agents handle every customer interaction with human-like precision.
             </p>
 
             {/* Premium CTAs */}
@@ -129,15 +149,130 @@ export default function HomePage() {
                 className="glass-strong text-lg px-12 py-5 h-auto border-2 border-pink-500/50 text-pink-400 hover:bg-pink-500/10 hover:text-pink-300 hover:border-pink-400 shadow-premium hover:shadow-premium-lg transition-all duration-300 transform hover:scale-105 group rounded-2xl animate-fade-in-right"
                 asChild
               >
-                <Link href="#pricing">
+                <Link href="/pricing">
                   <Target className="mr-3 h-5 w-5 group-hover:scale-110 transition-transform duration-300" />
                   View Investment Options
                 </Link>
               </Button>
             </div>
 
+            {/* Hero Images Showcase */}
+            <div className="mb-20 animate-fade-in-up" style={{animationDelay: '0.9s'}}>
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 max-w-6xl mx-auto">
+                <TiltedCard
+                  imageSrc="/placeholder.jpg"
+                  altText="AI Receptionist handling calls"
+                  captionText="Receptionist - 24/7 call handling"
+                  containerHeight="250px"
+                  containerWidth="100%"
+                  scaleOnHover={1.05}
+                  overlayContent={
+                    <div className="absolute bottom-4 left-4 text-white">
+                      <h4 className="font-semibold">Receptionist</h4>
+                      <p className="text-sm text-gray-200">24/7 call handling</p>
+                    </div>
+                  }
+                  displayOverlayContent={true}
+                />
+                <TiltedCard
+                  imageSrc="/placeholder-user.jpg"
+                  altText="Customer service AI agent"
+                  captionText="Customer Service - Intelligent support"
+                  containerHeight="250px"
+                  containerWidth="100%"
+                  scaleOnHover={1.05}
+                  overlayContent={
+                    <div className="absolute bottom-4 left-4 text-white">
+                      <h4 className="font-semibold">Customer Service</h4>
+                      <p className="text-sm text-gray-200">Intelligent support</p>
+                    </div>
+                  }
+                  displayOverlayContent={true}
+                />
+                <TiltedCard
+                  imageSrc="/placeholder.svg"
+                  altText="Chatbot interface"
+                  captionText="Chatbots - Multi-channel conversations"
+                  containerHeight="250px"
+                  containerWidth="100%"
+                  scaleOnHover={1.05}
+                  overlayContent={
+                    <div className="absolute bottom-4 left-4 text-white">
+                      <h4 className="font-semibold">Chatbots</h4>
+                      <p className="text-sm text-gray-200">Multi-channel conversations</p>
+                    </div>
+                  }
+                  displayOverlayContent={true}
+                />
+                <TiltedCard
+                  imageSrc="/placeholder-user.jpg"
+                  altText="Voice analytics and insights"
+                  captionText="Voice Analytics - AI-powered insights"
+                  containerHeight="250px"
+                  containerWidth="100%"
+                  scaleOnHover={1.05}
+                  overlayContent={
+                    <div className="absolute bottom-4 left-4 text-white">
+                      <h4 className="font-semibold">Voice Analytics</h4>
+                      <p className="text-sm text-gray-200">AI-powered insights</p>
+                    </div>
+                  }
+                  displayOverlayContent={true}
+                />
+                </div>
+                </div>
+
+            {/* Key Features */}
+            <div className="mt-20 animate-fade-in-up" style={{animationDelay: '1s'}}>
+              <h3 className="text-2xl md:text-3xl font-bold text-white text-center mb-12">Complete AI Receptionist Suite</h3>
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 max-w-5xl mx-auto">
+                <div className="glass rounded-2xl p-6 hover-glow transition-all duration-300">
+                  <div className="flex items-center gap-3 mb-3">
+                    <BarChart3 className="h-6 w-6 text-cyan-400" />
+                    <span className="text-white font-semibold">Analytics</span>
+                  </div>
+                  <p className="text-gray-300 text-sm">Comprehensive analytics and ROI tracking</p>
+                </div>
+                <div className="glass rounded-2xl p-6 hover-glow transition-all duration-300">
+                  <div className="flex items-center gap-3 mb-3">
+                    <Users className="h-6 w-6 text-pink-400" />
+                    <span className="text-white font-semibold">CRM Automation</span>
+                  </div>
+                  <p className="text-gray-300 text-sm">One-click CRM integration and automation</p>
+                </div>
+                <div className="glass rounded-2xl p-6 hover-glow transition-all duration-300">
+                  <div className="flex items-center gap-3 mb-3">
+                    <Target className="h-6 w-6 text-green-400" />
+                    <span className="text-white font-semibold">Lead Qualification</span>
+                  </div>
+                  <p className="text-gray-300 text-sm">AI-powered scoring and qualification</p>
+                </div>
+                <div className="glass rounded-2xl p-6 hover-glow transition-all duration-300">
+                  <div className="flex items-center gap-3 mb-3">
+                    <Mail className="h-6 w-6 text-yellow-400" />
+                    <span className="text-white font-semibold">Email Campaigns</span>
+                  </div>
+                  <p className="text-gray-300 text-sm">Personalized content generation</p>
+                </div>
+                <div className="glass rounded-2xl p-6 hover-glow transition-all duration-300">
+                  <div className="flex items-center gap-3 mb-3">
+                    <FileText className="h-6 w-6 text-purple-400" />
+                    <span className="text-white font-semibold">Documentation</span>
+                  </div>
+                  <p className="text-gray-300 text-sm">Complete end-to-end documentation</p>
+                </div>
+                <div className="glass rounded-2xl p-6 hover-glow transition-all duration-300">
+                  <div className="flex items-center gap-3 mb-3">
+                    <Settings className="h-6 w-6 text-cyan-400" />
+                    <span className="text-white font-semibold">90-Day Optimization</span>
+                  </div>
+                  <p className="text-gray-300 text-sm">SOP optimization and training plan</p>
+                </div>
+              </div>
+            </div>
+
             {/* Premium Stats */}
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-8 max-w-4xl mx-auto animate-fade-in-up" style={{animationDelay: '1s'}}>
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-8 max-w-4xl mx-auto animate-fade-in-up" style={{animationDelay: '1.1s'}}>
               <div className="glass rounded-2xl p-6 hover-glow transition-all duration-300">
                 <div className="text-3xl font-bold text-gradient-cyan mb-2">99.9%</div>
                 <div className="text-gray-300 font-medium">Uptime Guarantee</div>
@@ -275,134 +410,6 @@ export default function HomePage() {
         </div>
       </section>
 
-      {/* Features Section - Premium Capabilities */}
-      <section id="features" className="py-24 relative overflow-hidden" style={{backgroundColor: '#0B0B0D'}}>
-        {/* Premium Background */}
-        <div className="absolute inset-0 gradient-premium opacity-30" />
-        <div className="absolute inset-0 bg-gradient-to-b from-transparent via-cyan-500/5 to-transparent" />
-
-        <div className="container mx-auto px-4 sm:px-6 lg:px-8 relative z-10">
-          <div className="text-center mb-20">
-            <div className="inline-flex items-center gap-2 glass rounded-full px-6 py-3 mb-6 animate-fade-in-up">
-              <Star className="h-4 w-4 text-yellow-400" />
-              <span className="text-sm font-medium text-cyan-300">Premium Suite Features</span>
-              <Star className="h-4 w-4 text-yellow-400" />
-            </div>
-            <h2 className="premium-heading text-4xl md:text-5xl lg:text-6xl mb-6 text-white animate-fade-in-up" style={{animationDelay: '0.2s'}}>
-              Concierge-Level Service{" "}
-              <span className="text-gradient">Capabilities</span>
-            </h2>
-            <p className="premium-subheading text-xl text-gray-300 max-w-3xl mx-auto animate-fade-in-up" style={{animationDelay: '0.4s'}}>
-              Every feature meticulously crafted to deliver the exceptional experience your premium clients deserve
-            </p>
-          </div>
-
-          <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-8 mb-16">
-            <div className="card-premium p-8 animate-fade-in-up group" style={{animationDelay: '0.6s'}}>
-              <div className="flex items-center justify-center w-16 h-16 bg-cyan-500/20 rounded-2xl mb-6 group-hover:scale-110 transition-transform duration-300">
-                <PhoneCall className="h-8 w-8 text-cyan-400" />
-              </div>
-              <h3 className="text-xl font-bold mb-4 text-white">Bespoke Conversational Intelligence</h3>
-              <p className="text-gray-300 leading-relaxed">
-                Custom-trained voice that perfectly embodies your brand's tone, personality, and expertise with natural conversation flow
-              </p>
-            </div>
-
-            <div className="card-premium p-8 animate-fade-in-up group relative" style={{animationDelay: '0.8s'}}>
-              <div className="absolute -top-3 -right-3 glass rounded-full px-3 py-1">
-                <span className="text-xs font-bold text-cyan-300">$8K Value</span>
-              </div>
-              <div className="flex items-center justify-center w-16 h-16 bg-cyan-500/20 rounded-2xl mb-6 group-hover:scale-110 transition-transform duration-300">
-                <Target className="h-8 w-8 text-cyan-400" />
-              </div>
-              <h3 className="text-xl font-bold mb-4 text-white">Lead Generation Engine</h3>
-              <p className="text-gray-300 leading-relaxed">
-                AI-powered scoring + qualification + BANT analysis + automatic lead routing to your best closers with predictive insights
-              </p>
-            </div>
-
-            <div className="card-premium p-8 animate-fade-in-up group relative" style={{animationDelay: '1s'}}>
-              <div className="absolute -top-3 -right-3 glass rounded-full px-3 py-1">
-                <span className="text-xs font-bold text-pink-300">$12K Value</span>
-              </div>
-              <div className="flex items-center justify-center w-16 h-16 bg-pink-500/20 rounded-2xl mb-6 group-hover:scale-110 transition-transform duration-300">
-                <Users className="h-8 w-8 text-pink-400" />
-              </div>
-              <h3 className="text-xl font-bold mb-4 text-white">Customer Management CRM</h3>
-              <p className="text-gray-300 leading-relaxed">
-                Complete relationship management + interaction tracking + lifetime value analysis + VIP routing with personalized service
-              </p>
-            </div>
-
-            <div className="card-premium p-8 animate-fade-in-up group relative" style={{animationDelay: '1.2s'}}>
-              <div className="absolute -top-3 -right-3 glass rounded-full px-3 py-1">
-                <span className="text-xs font-bold text-purple-300">$10K Value</span>
-              </div>
-              <div className="flex items-center justify-center w-16 h-16 bg-purple-500/20 rounded-2xl mb-6 group-hover:scale-110 transition-transform duration-300">
-                <BarChart3 className="h-8 w-8 text-purple-400" />
-              </div>
-              <h3 className="text-xl font-bold mb-4 text-white">Analytics Dashboard</h3>
-              <p className="text-gray-300 leading-relaxed">
-                Business intelligence + predictive analytics + ROI tracking + executive reporting + trend analysis with real-time insights
-              </p>
-            </div>
-
-            <div className="card-premium p-8 animate-fade-in-up group relative" style={{animationDelay: '1.4s'}}>
-              <div className="absolute -top-3 -right-3 glass rounded-full px-3 py-1">
-                <span className="text-xs font-bold text-orange-300">$7K Value</span>
-              </div>
-              <div className="flex items-center justify-center w-16 h-16 bg-orange-500/20 rounded-2xl mb-6 group-hover:scale-110 transition-transform duration-300">
-                <MessageSquare className="h-8 w-8 text-orange-400" />
-              </div>
-              <h3 className="text-xl font-bold mb-4 text-white">Marketing Automation</h3>
-              <p className="text-gray-300 leading-relaxed">
-                Email campaigns + social media automation + content generation + nurture sequences + A/B testing with AI optimization
-              </p>
-            </div>
-
-            <div className="card-premium p-8 animate-fade-in-up group relative" style={{animationDelay: '1.6s'}}>
-              <div className="absolute -top-3 -right-3 glass rounded-full px-3 py-1">
-                <span className="text-xs font-bold text-blue-300">$9K Value</span>
-              </div>
-              <div className="flex items-center justify-center w-16 h-16 bg-blue-500/20 rounded-2xl mb-6 group-hover:scale-110 transition-transform duration-300">
-                <Headphones className="h-8 w-8 text-blue-400" />
-              </div>
-              <h3 className="text-xl font-bold mb-4 text-white">24/7 AI Chatbot</h3>
-              <p className="text-gray-300 leading-relaxed">
-                Intelligent customer service + instant responses + escalation handling + multilingual support with context awareness
-              </p>
-            </div>
-
-            <div className="card-premium p-8 animate-fade-in-up group relative md:col-span-2 lg:col-span-1" style={{animationDelay: '1.8s'}}>
-              <div className="absolute -top-3 -right-3 glass rounded-full px-3 py-1">
-                <span className="text-xs font-bold text-teal-300">$5K Value</span>
-              </div>
-              <div className="flex items-center justify-center w-16 h-16 bg-teal-500/20 rounded-2xl mb-6 group-hover:scale-110 transition-transform duration-300">
-                <Settings className="h-8 w-8 text-teal-400" />
-              </div>
-              <h3 className="text-xl font-bold mb-4 text-white">Settings Management</h3>
-              <p className="text-gray-300 leading-relaxed">
-                Complete configuration interface + user management + security controls + integration settings with enterprise-grade security
-              </p>
-            </div>
-          </div>
-
-          <div className="text-center animate-fade-in-up" style={{animationDelay: '2s'}}>
-            <div className="card-premium-strong p-8 max-w-2xl mx-auto mb-8">
-              <div className="text-4xl font-bold text-gradient-cyan mb-2">$66,000</div>
-              <div className="text-lg text-gray-300 mb-4">Complete Suite Value</div>
-              <div className="text-2xl font-bold text-white mb-2">Your Investment: $2,997/month</div>
-              <div className="text-green-400 font-semibold">You Save: $63,003</div>
-            </div>
-            <Button className="btn-premium text-lg px-12 py-4 font-semibold rounded-2xl" asChild>
-              <Link href="/demo">
-                Get Your $66K AI Suite For $2,997/month
-                <ArrowRight className="ml-3 h-5 w-5" />
-              </Link>
-            </Button>
-          </div>
-        </div>
-      </section>
 
       {/* Integrations & Tech Stack */}
       <section className="py-16" style={{backgroundColor: '#0B0B0D'}}>
@@ -468,510 +475,24 @@ export default function HomePage() {
         </div>
       </section>
 
-      {/* Onboarding / Implementation Flow */}
-      <section className="py-20" style={{backgroundColor: '#0B0B0D'}}>
-        <div className="container mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="text-center mb-16">
-            <h2 className="text-3xl md:text-4xl font-bold mb-4 text-white">Simple Onboarding Process</h2>
-            <p className="text-xl text-gray-300 max-w-2xl mx-auto">
-              Get your AI receptionist up and running in just 48 hours with our guided setup process
-            </p>
-          </div>
 
-          <div className="grid md:grid-cols-5 gap-8 max-w-6xl mx-auto">
-            <div className="text-center">
-              <div className="w-16 h-16 bg-cyan-500/20 rounded-full flex items-center justify-center mx-auto mb-4 border border-cyan-500/30">
-                <span className="text-2xl font-bold text-cyan-400">1</span>
-              </div>
-              <h3 className="text-lg font-semibold mb-2 text-white">Discovery call</h3>
-              <p className="text-sm text-gray-400 mb-2">30 minutes</p>
-              <p className="text-gray-300">We learn about your business and requirements</p>
-            </div>
 
-            <div className="text-center">
-              <div className="w-16 h-16 bg-primary/10 rounded-full flex items-center justify-center mx-auto mb-4">
-                <span className="text-2xl font-bold text-primary">2</span>
-              </div>
-              <h3 className="text-lg font-semibold mb-2">Setup & integrations</h3>
-              <p className="text-sm text-muted-foreground mb-2">1-2 days</p>
-              <p className="text-muted-foreground">Connect your calendar, CRM, and phone system</p>
-            </div>
 
-            <div className="text-center">
-              <div className="w-16 h-16 bg-primary/10 rounded-full flex items-center justify-center mx-auto mb-4">
-                <span className="text-2xl font-bold text-primary">3</span>
-              </div>
-              <h3 className="text-lg font-semibold mb-2">Training & voice tuning</h3>
-              <p className="text-sm text-muted-foreground mb-2">1-3 days</p>
-              <p className="text-muted-foreground">Customize voice, personality, and scripts</p>
-            </div>
 
-            <div className="text-center">
-              <div className="w-16 h-16 bg-primary/10 rounded-full flex items-center justify-center mx-auto mb-4">
-                <span className="text-2xl font-bold text-primary">4</span>
-              </div>
-              <h3 className="text-lg font-semibold mb-2">Pilot testing</h3>
-              <p className="text-sm text-muted-foreground mb-2">2 weeks</p>
-              <p className="text-muted-foreground">Test with real calls and fine-tune performance</p>
-            </div>
 
-            <div className="text-center">
-              <div className="w-16 h-16 bg-primary/10 rounded-full flex items-center justify-center mx-auto mb-4">
-                <span className="text-2xl font-bold text-primary">5</span>
-              </div>
-              <h3 className="text-lg font-semibold mb-2">Go live</h3>
-              <p className="text-sm text-muted-foreground mb-2">Ongoing</p>
-              <p className="text-muted-foreground">Full deployment with ongoing optimization</p>
-            </div>
-          </div>
-
-          <div className="text-center mt-12">
-            <div className="inline-flex items-center gap-2 bg-blue-50 text-blue-700 px-4 py-2 rounded-full text-sm">
-              <Shield className="h-4 w-4" />
-              <span>We handle all compliance & data security requirements</span>
-            </div>
-          </div>
-        </div>
-      </section>
-
-      {/* FAQs */}
-      <section className="py-20 bg-muted/30">
-        <div className="container mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="text-center mb-16">
-            <h2 className="text-3xl md:text-4xl font-bold mb-4">Frequently Asked Questions</h2>
-            <p className="text-xl text-muted-foreground">Everything you need to know about our AI receptionist</p>
-          </div>
-
-          <div className="grid md:grid-cols-2 gap-8 max-w-4xl mx-auto">
-            <div className="space-y-6">
-              <div>
-                <h3 className="text-lg font-semibold mb-2">How do you handle data/privacy?</h3>
-                <p className="text-muted-foreground">
-                  We encrypt data at rest & in transit, support SOC2/GDPR controls, and can sign an NDA/BAA for healthcare and enterprise clients.
-                </p>
-              </div>
-
-              <div>
-                <h3 className="text-lg font-semibold mb-2">Can it transfer to a human?</h3>
-                <p className="text-muted-foreground">
-                  Yes — configurable triggers route calls to live agents or on-call phones based on your business rules.
-                </p>
-              </div>
-
-              <div>
-                <h3 className="text-lg font-semibold mb-2">What languages/voices are supported?</h3>
-                <p className="text-muted-foreground">
-                  We support 20+ languages and can tune voice/personality to match your brand and customer expectations.
-                </p>
-              </div>
-            </div>
-
-            <div className="space-y-6">
-              <div>
-                <h3 className="text-lg font-semibold mb-2">How long to integrate with my CRM?</h3>
-                <p className="text-muted-foreground">
-                  Most integrations take 1-3 days; custom work typically completed within a week with our technical team.
-                </p>
-              </div>
-
-              <div>
-                <h3 className="text-lg font-semibold mb-2">What happens on failed recognition?</h3>
-                <p className="text-muted-foreground">
-                  AI asks clarifying questions and flags uncertain leads for human follow-up to ensure no opportunities are missed.
-                </p>
-              </div>
-
-              <div>
-                <h3 className="text-lg font-semibold mb-2">What about uptime and reliability?</h3>
-                <p className="text-muted-foreground">
-                  We guarantee 99.9% uptime with automatic failover to backup systems and 24/7 monitoring of all services.
-                </p>
-              </div>
-            </div>
-          </div>
-        </div>
-      </section>
-
-      {/* Demo Section */}
-      <section id="demo" className="py-20 bg-background">
-        <div className="container mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="text-center mb-16">
-            <h2 className="text-3xl md:text-4xl font-bold mb-4">Experience the Difference</h2>
-            <p className="text-xl text-muted-foreground max-w-2xl mx-auto">
-              Try our AI receptionist now. Enter your phone number below and experience a conversation that feels
-              completely natural.
-            </p>
-          </div>
-
-          <CallDemo />
-
-          <div className="mt-12 text-center">
-            <p className="text-sm text-muted-foreground mb-4">
-              This demo uses a sample business configuration. Your AI receptionist will be customized for your specific
-              business.
-            </p>
-            <Button variant="outline" asChild>
-              <Link href="/auth/sign-up">
-                Set Up Your PrismAI Assistant
-                <ArrowRight className="ml-2 h-4 w-4" />
-              </Link>
-            </Button>
-          </div>
-        </div>
-      </section>
-
-      {/* Social Proof / Case Studies - Premium Design */}
-      <section id="case-studies" className="py-24 relative overflow-hidden" style={{backgroundColor: '#0B0B0D'}}>
-        {/* Premium Background */}
-        <div className="absolute inset-0 gradient-premium opacity-20" />
-        <div className="absolute inset-0 bg-gradient-to-br from-green-500/5 via-cyan-500/5 to-pink-500/5" />
-
-        <div className="container mx-auto px-4 sm:px-6 lg:px-8 relative z-10">
-          <div className="text-center mb-20">
-            <div className="inline-flex items-center gap-2 glass rounded-full px-6 py-3 mb-6 animate-fade-in-up">
-              <Award className="h-4 w-4 text-yellow-400" />
-              <span className="text-sm font-medium text-yellow-300">Success Stories</span>
-            </div>
-            <h2 className="premium-heading text-4xl md:text-5xl lg:text-6xl mb-6 text-white animate-fade-in-up" style={{animationDelay: '0.2s'}}>
-              $47M+ Generated For{" "}
-              <span className="text-gradient">Clients In 12 Months</span>
-            </h2>
-            <p className="premium-subheading text-xl text-gray-300 mb-8 animate-fade-in-up" style={{animationDelay: '0.4s'}}>
-              Real Companies, Real Revenue, Real Results
-            </p>
-            <div className="glass rounded-2xl p-4 max-w-2xl mx-auto animate-fade-in-up" style={{animationDelay: '0.6s'}}>
-              <div className="flex items-center justify-center gap-3">
-                <Award className="h-5 w-5 text-green-400" />
-                <span className="text-green-300 font-medium">98% Client Retention • 847% Average ROI • 90-Day Revenue Guarantee</span>
-              </div>
-            </div>
-          </div>
-
-          {/* Featured Case Studies */}
-          <div className="grid md:grid-cols-3 gap-8 mb-20">
-            <div className="card-premium-strong p-8 animate-fade-in-up hover-lift" style={{animationDelay: '0.8s'}}>
-              <div className="text-center mb-8">
-                <h3 className="text-2xl font-bold mb-3 text-white">TechCorp Solutions</h3>
-                <p className="text-green-400 text-lg font-semibold">SaaS Company • $15M ARR</p>
-              </div>
-
-              <div className="grid grid-cols-2 gap-6 mb-8">
-                <div className="glass rounded-xl p-4 text-center">
-                  <div className="text-2xl font-bold text-green-400 mb-1">$2.8M</div>
-                  <div className="text-sm text-gray-300">Additional Revenue</div>
-                </div>
-                <div className="glass rounded-xl p-4 text-center">
-                  <div className="text-2xl font-bold text-green-400 mb-1">340%</div>
-                  <div className="text-sm text-gray-300">Lead Increase</div>
-                </div>
-                <div className="glass rounded-xl p-4 text-center">
-                  <div className="text-2xl font-bold text-green-400 mb-1">67 Days</div>
-                  <div className="text-sm text-gray-300">To $1M ROI</div>
-                </div>
-                <div className="glass rounded-xl p-4 text-center">
-                  <div className="text-2xl font-bold text-green-400 mb-1">97%</div>
-                  <div className="text-sm text-gray-300">Lead Capture Rate</div>
-                </div>
-              </div>
-
-              <blockquote className="text-center text-lg italic text-gray-300 mb-6 leading-relaxed">
-                "We went from losing $50K/month in missed leads to generating $2.8M in additional revenue. This AI suite is insane."
-              </blockquote>
-              <div className="text-center">
-                <div className="font-semibold text-white">Marcus Johnson</div>
-                <div className="text-sm text-gray-400">CEO, TechCorp Solutions</div>
-              </div>
-            </div>
-
-            <div className="card-premium-strong p-8 animate-fade-in-up hover-lift" style={{animationDelay: '1s'}}>
-              <div className="text-center mb-8">
-                <h3 className="text-2xl font-bold mb-3 text-white">Elite MedSpa Chain</h3>
-                <p className="text-cyan-400 text-lg font-semibold">Healthcare • 47 Locations</p>
-              </div>
-
-              <div className="grid grid-cols-2 gap-6 mb-8">
-                <div className="glass rounded-xl p-4 text-center">
-                  <div className="text-2xl font-bold text-cyan-400 mb-1">$4.2M</div>
-                  <div className="text-sm text-gray-300">Revenue Increase</div>
-                </div>
-                <div className="glass rounded-xl p-4 text-center">
-                  <div className="text-2xl font-bold text-cyan-400 mb-1">73%</div>
-                  <div className="text-sm text-gray-300">Booking Increase</div>
-                </div>
-                <div className="glass rounded-xl p-4 text-center">
-                  <div className="text-2xl font-bold text-cyan-400 mb-1">$847K</div>
-                  <div className="text-sm text-gray-300">Costs Eliminated</div>
-                </div>
-                <div className="glass rounded-xl p-4 text-center">
-                  <div className="text-2xl font-bold text-cyan-400 mb-1">24/7</div>
-                  <div className="text-sm text-gray-300">Lead Generation</div>
-                </div>
-              </div>
-
-              <blockquote className="text-center text-lg italic text-gray-300 mb-6 leading-relaxed">
-                "Eliminated 3 call centers and increased bookings by 73%. Patients can't tell it's AI. Worth every penny."
-              </blockquote>
-              <div className="text-center">
-                <div className="font-semibold text-white">Dr. Sarah Chen</div>
-                <div className="text-sm text-gray-400">Founder, Elite MedSpa Chain</div>
-              </div>
-            </div>
-
-            <div className="card-premium-strong p-8 animate-fade-in-up hover-lift" style={{animationDelay: '1.2s'}}>
-              <div className="text-center mb-8">
-                <h3 className="text-2xl font-bold mb-3 text-white">Platinum Legal Group</h3>
-                <p className="text-pink-400 text-lg font-semibold">Law Firm • $8M Revenue</p>
-              </div>
-
-              <div className="grid grid-cols-2 gap-6 mb-8">
-                <div className="glass rounded-xl p-4 text-center">
-                  <div className="text-2xl font-bold text-pink-400 mb-1">$3.1M</div>
-                  <div className="text-sm text-gray-300">New Clients Value</div>
-                </div>
-                <div className="glass rounded-xl p-4 text-center">
-                  <div className="text-2xl font-bold text-pink-400 mb-1">450%</div>
-                  <div className="text-sm text-gray-300">Consultation Rate</div>
-                </div>
-                <div className="glass rounded-xl p-4 text-center">
-                  <div className="text-2xl font-bold text-pink-400 mb-1">52 Days</div>
-                  <div className="text-sm text-gray-300">ROI Payback</div>
-                </div>
-                <div className="glass rounded-xl p-4 text-center">
-                  <div className="text-2xl font-bold text-pink-400 mb-1">89%</div>
-                  <div className="text-sm text-gray-400">Client Satisfaction</div>
-                </div>
-              </div>
-
-              <blockquote className="text-center text-lg italic text-gray-300 mb-6 leading-relaxed">
-                "Never thought AI could handle legal intake. Now it's booking $3.1M worth of clients while we sleep."
-              </blockquote>
-              <div className="text-center">
-                <div className="font-semibold text-white">Lisa Rodriguez</div>
-                <div className="text-sm text-gray-400">Managing Partner</div>
-              </div>
-            </div>
-          </div>
-
-          <div className="text-center animate-fade-in-up" style={{animationDelay: '1.4s'}}>
-            <div className="card-premium-strong p-8 max-w-2xl mx-auto">
-              <div className="text-xl font-bold mb-4 text-white">Total Client Revenue Generated:</div>
-              <div className="text-5xl font-extrabold text-gradient-cyan mb-4">$47,300,000+</div>
-              <div className="text-lg text-gray-300 mb-4">In Just 12 Months</div>
-              <div className="text-green-400 font-semibold">Average Client ROI: 847% • Your Success Is Guaranteed</div>
-            </div>
-          </div>
-        </div>
-      </section>
-
-      {/* Stats Section */}
-      <section className="py-20 bg-gradient-to-r from-primary via-primary/90 to-secondary text-primary-foreground">
-        <div className="container mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="grid md:grid-cols-4 gap-8 text-center">
-            <div className="group hover:scale-105 transition-transform duration-200">
-              <div className="text-4xl font-bold mb-2">99.9%</div>
-              <div className="text-primary-foreground/80">Uptime Guarantee</div>
-            </div>
-            <div className="group hover:scale-105 transition-transform duration-200">
-              <div className="text-4xl font-bold mb-2">2.3s</div>
-              <div className="text-primary-foreground/80">Average Response Time</div>
-            </div>
-            <div className="group hover:scale-105 transition-transform duration-200">
-              <div className="text-4xl font-bold mb-2">10,000+</div>
-              <div className="text-primary-foreground/80">Calls Handled Daily</div>
-            </div>
-            <div className="group hover:scale-105 transition-transform duration-200">
-              <div className="text-4xl font-bold mb-2">95%</div>
-              <div className="text-primary-foreground/80">Customer Satisfaction</div>
-            </div>
-          </div>
-        </div>
-      </section>
-
-      {/* Pricing Section - Premium Presentation */}
-      <section id="pricing" className="py-24 relative overflow-hidden" style={{backgroundColor: '#0B0B0D'}}>
-        {/* Premium Background */}
-        <div className="absolute inset-0 gradient-premium opacity-30" />
-        <div className="absolute inset-0 bg-gradient-to-b from-transparent via-green-500/5 to-transparent" />
-
-        <div className="container mx-auto px-4 sm:px-6 lg:px-8 relative z-10">
-          <div className="text-center mb-20">
-            <div className="inline-flex items-center gap-2 glass rounded-full px-6 py-3 mb-6 animate-fade-in-up">
-              <Star className="h-4 w-4 text-yellow-400" />
-              <span className="text-sm font-medium text-yellow-300">Premium Investment</span>
-            </div>
-            <h2 className="premium-heading text-4xl md:text-5xl lg:text-6xl mb-6 text-white animate-fade-in-up" style={{animationDelay: '0.2s'}}>
-              Your $66K{" "}
-              <span className="text-gradient">AI Revenue Engine</span>
-            </h2>
-            <p className="premium-subheading text-xl text-gray-300 mb-8 animate-fade-in-up" style={{animationDelay: '0.4s'}}>
-              Complete Implementation + 90-Day Revenue Guarantee + Dedicated Success Manager
-            </p>
-
-            <div className="glass rounded-2xl p-6 max-w-3xl mx-auto animate-fade-in-up" style={{animationDelay: '0.6s'}}>
-              <div className="flex items-center justify-center gap-3">
-                <CheckCircle className="h-6 w-6 text-green-400" />
-                <span className="text-green-300 font-medium text-lg">90-Day Revenue Guarantee • If you don't generate $10K+ in new revenue, we work for FREE</span>
-              </div>
-            </div>
-          </div>
-
-          <div className="max-w-5xl mx-auto">
-            {/* Main Offer */}
-            <div className="card-premium-strong p-8 md:p-12 relative animate-fade-in-up hover-lift" style={{animationDelay: '0.8s'}}>
-              <div className="absolute -top-6 left-1/2 transform -translate-x-1/2">
-                <div className="glass rounded-full px-8 py-3 shadow-premium">
-                  <span className="text-green-300 font-bold text-lg">BEST VALUE - 94% Choose This</span>
-                </div>
-              </div>
-
-              <div className="text-center mb-8">
-                <h3 className="text-4xl font-bold mb-6 text-white">Complete PrismAI Platform</h3>
-                <div className="mb-8">
-                  <div className="text-7xl font-extrabold text-gradient-cyan mb-4">
-                    $2,997<span className="text-3xl text-gray-400">/month</span>
-                  </div>
-                  <div className="text-gray-300 line-through text-xl mb-2">Value: $66,000</div>
-                  <div className="text-green-400 font-bold text-2xl">You Save: $63,003</div>
-                </div>
-                <p className="text-xl text-gray-300 leading-relaxed">
-                  Everything you need to generate $2M+ in additional revenue
-                </p>
-              </div>
-
-              <div className="grid md:grid-cols-2 gap-8 mb-10">
-                <div className="space-y-4">
-                  <div className="flex items-center gap-4">
-                    <div className="w-8 h-8 bg-green-500/20 rounded-lg flex items-center justify-center">
-                      <CheckCircle className="h-5 w-5 text-green-400" />
-                    </div>
-                    <span className="text-white font-medium">AI Suite Dashboard ($15K value)</span>
-                  </div>
-                  <div className="flex items-center gap-4">
-                    <div className="w-8 h-8 bg-green-500/20 rounded-lg flex items-center justify-center">
-                      <CheckCircle className="h-5 w-5 text-green-400" />
-                    </div>
-                    <span className="text-white font-medium">Lead Generation Engine ($8K value)</span>
-                  </div>
-                  <div className="flex items-center gap-4">
-                    <div className="w-8 h-8 bg-green-500/20 rounded-lg flex items-center justify-center">
-                      <CheckCircle className="h-5 w-5 text-green-400" />
-                    </div>
-                    <span className="text-white font-medium">Customer Management CRM ($12K value)</span>
-                  </div>
-                  <div className="flex items-center gap-4">
-                    <div className="w-8 h-8 bg-green-500/20 rounded-lg flex items-center justify-center">
-                      <CheckCircle className="h-5 w-5 text-green-400" />
-                    </div>
-                    <span className="text-white font-medium">Analytics Dashboard ($10K value)</span>
-                  </div>
-                </div>
-                <div className="space-y-4">
-                  <div className="flex items-center gap-4">
-                    <div className="w-8 h-8 bg-green-500/20 rounded-lg flex items-center justify-center">
-                      <CheckCircle className="h-5 w-5 text-green-400" />
-                    </div>
-                    <span className="text-white font-medium">Marketing Automation ($7K value)</span>
-                  </div>
-                  <div className="flex items-center gap-4">
-                    <div className="w-8 h-8 bg-green-500/20 rounded-lg flex items-center justify-center">
-                      <CheckCircle className="h-5 w-5 text-green-400" />
-                    </div>
-                    <span className="text-white font-medium">24/7 AI Chatbot ($9K value)</span>
-                  </div>
-                  <div className="flex items-center gap-4">
-                    <div className="w-8 h-8 bg-green-500/20 rounded-lg flex items-center justify-center">
-                      <CheckCircle className="h-5 w-5 text-green-400" />
-                    </div>
-                    <span className="text-white font-medium">Settings Management ($5K value)</span>
-                  </div>
-                  <div className="flex items-center gap-4">
-                    <div className="w-8 h-8 bg-green-500/20 rounded-lg flex items-center justify-center">
-                      <CheckCircle className="h-5 w-5 text-green-400" />
-                    </div>
-                    <span className="text-white font-medium">Dedicated Success Manager (Priceless)</span>
-                  </div>
-                </div>
-              </div>
-
-              <div className="border-t border-green-500/30 pt-8 mb-8">
-                <h4 className="text-2xl font-bold text-gradient-cyan mb-6 text-center">EXCLUSIVE BONUSES (Limited Time):</h4>
-                <div className="grid md:grid-cols-3 gap-6">
-                  <div className="glass rounded-xl p-4 text-center">
-                    <Star className="h-6 w-6 text-yellow-400 mx-auto mb-2" />
-                    <div className="text-white font-semibold">White-Glove Setup & Training</div>
-                    <div className="text-green-400 text-sm">($5K value)</div>
-                  </div>
-                  <div className="glass rounded-xl p-4 text-center">
-                    <Star className="h-6 w-6 text-yellow-400 mx-auto mb-2" />
-                    <div className="text-white font-semibold">90-Day Revenue Guarantee</div>
-                    <div className="text-green-400 text-sm">($10K value)</div>
-                  </div>
-                  <div className="glass rounded-xl p-4 text-center">
-                    <Star className="h-6 w-6 text-yellow-400 mx-auto mb-2" />
-                    <div className="text-white font-semibold">24/7 Priority Support</div>
-                    <div className="text-green-400 text-sm">($3K value)</div>
-                  </div>
-                </div>
-              </div>
-
-              <div className="glass-strong rounded-xl p-6 mb-8 border border-red-500/30">
-                <div className="text-center">
-                  <div className="text-red-400 font-bold text-xl mb-2">⚠️ URGENT: Price Increases to $4,997 on Jan 31st</div>
-                  <div className="text-red-300">Lock in $2,997/month forever (37 spots remaining)</div>
-                </div>
-              </div>
-
-              <Button className="btn-premium w-full text-xl py-6 font-bold rounded-2xl mb-6" asChild>
-                <Link href="/demo">
-                  🚀 CLAIM YOUR $66K AI SUITE FOR $2,997/MONTH
-                </Link>
-              </Button>
-
-              <div className="text-center">
-                <div className="text-green-400 font-bold text-lg mb-2">90-Day Money-Back Guarantee</div>
-                <div className="text-gray-400">If you don't generate $10K+ in new revenue, we'll refund everything</div>
-              </div>
-            </div>
-          </div>
-
-          <div className="text-center mt-16 animate-fade-in-up" style={{animationDelay: '1s'}}>
-            <p className="text-gray-300 mb-6 text-lg">
-              Join 500+ companies already generating $2M+ with our AI Suite
-            </p>
-            <div className="grid md:grid-cols-4 gap-4 max-w-3xl mx-auto">
-              <div className="glass rounded-xl p-4">
-                <div className="text-green-400 font-bold text-lg">✅</div>
-                <div className="text-white font-medium">No Setup Fees</div>
-              </div>
-              <div className="glass rounded-xl p-4">
-                <div className="text-green-400 font-bold text-lg">✅</div>
-                <div className="text-white font-medium">Cancel Anytime</div>
-              </div>
-              <div className="glass rounded-xl p-4">
-                <div className="text-green-400 font-bold text-lg">✅</div>
-                <div className="text-white font-medium">Revenue Guaranteed</div>
-              </div>
-              <div className="glass rounded-xl p-4">
-                <div className="text-green-400 font-bold text-lg">✅</div>
-                <div className="text-white font-medium">Done-For-You Implementation</div>
-              </div>
-            </div>
-          </div>
-        </div>
-      </section>
 
       {/* Final CTA Section - Hormozi Style */}
       <section className="py-20 bg-gradient-to-r from-green-900/20 via-green-800/20 to-cyan-900/20">
         <div className="container mx-auto px-4 sm:px-6 lg:px-8 text-center">
-          <h2 className="text-3xl md:text-5xl font-bold mb-6 text-white">Last Chance: $63,003 Savings Expires Soon</h2>
+          <h2 className="text-3xl md:text-5xl font-bold mb-6 text-white">Secure Your AI Receptionist Investment</h2>
           <p className="text-xl text-gray-300 mb-8 max-w-4xl mx-auto">
             While your competitors keep losing $500K+ annually to missed opportunities, you could be generating $2M+ in new revenue. But this offer expires Jan 31st.
           </p>
           
           <div className="bg-red-900/30 border border-red-500/50 rounded-lg p-6 max-w-2xl mx-auto mb-8">
             <div className="text-red-400 font-bold text-xl mb-2">⚠️ WARNING: Price Increases to $4,997 in:</div>
-            <div className="text-red-300 text-lg font-semibold">37 spots remaining at $2,997/month</div>
-            <div className="text-red-200 text-sm mt-2">After Jan 31st, new clients pay $4,997/month (current clients grandfathered at $2,997)</div>
+            <div className="text-red-300 text-lg font-semibold">Limited spots at $4,000 upfront + $1,000/month retainer</div>
+            <div className="text-red-200 text-sm mt-2">Limited time offer for new pricing structure</div>
           </div>
           
           <div className="flex flex-col sm:flex-row gap-6 justify-center mb-12">
@@ -982,18 +503,18 @@ export default function HomePage() {
             >
               <Link href="/demo">
                 <Calendar className="mr-3 h-6 w-6 group-hover:rotate-12 transition-transform" />
-                🚀 SECURE YOUR $66K AI SUITE NOW
+                🚀 SECURE YOUR AI RECEPTIONIST NOW
                 <ArrowRight className="ml-3 h-6 w-6 group-hover:translate-x-1 transition-transform" />
               </Link>
             </Button>
             
-            <Button 
-              variant="outline" 
-              size="lg" 
-              className="text-lg px-8 py-6 h-auto border-2 border-cyan-500 text-cyan-400 hover:bg-cyan-500 hover:text-white shadow-lg hover:shadow-xl transition-all duration-300 transform hover:scale-105 group" 
+            <Button
+              variant="outline"
+              size="lg"
+              className="text-lg px-8 py-6 h-auto border-2 border-cyan-500 text-cyan-400 hover:bg-cyan-500 hover:text-white shadow-lg hover:shadow-xl transition-all duration-300 transform hover:scale-105 group"
               asChild
             >
-              <Link href="#case-studies">
+              <Link href="/features">
                 <Target className="mr-3 h-5 w-5 group-hover:scale-110 transition-transform" />
                 See $47M+ Success Stories
               </Link>
@@ -1022,9 +543,9 @@ export default function HomePage() {
           <div id="contact" className="max-w-2xl mx-auto mt-16">
             <Card className="border-2 border-green-500/30 bg-gray-800/50">
               <CardHeader className="text-center">
-                <CardTitle className="text-2xl text-white">Claim Your $66K AI Revenue Engine</CardTitle>
+                <CardTitle className="text-2xl text-white">Claim Your AI Receptionist</CardTitle>
                 <CardDescription className="text-gray-300">
-                  Fill out the form below and we'll have your AI Suite generating revenue within 48 hours
+                  Fill out the form below and we'll have your AI Receptionist set up within 48 hours
                 </CardDescription>
               </CardHeader>
               <CardContent>
@@ -1068,12 +589,12 @@ export default function HomePage() {
                   </div>
                   
                   <Button className="w-full bg-green-600 hover:bg-green-700 text-white pulse" size="lg">
-                    🚀 GET MY $66K AI SUITE FOR $2,997/MONTH
+                    🚀 GET MY AI RECEPTIONIST FOR $4,000 UPFRONT + $1,000/MONTH
                   </Button>
                 </form>
                 
                 <p className="text-xs text-gray-400 mt-4 text-center">
-                  🔒 Your information is 100% secure. We'll call you within 2 hours to set up your AI Suite.
+                  🔒 Your information is 100% secure. We'll call you within 2 hours to set up your AI Receptionist.
                 </p>
               </CardContent>
             </Card>
@@ -1082,7 +603,7 @@ export default function HomePage() {
           <div className="mt-12 text-center">
             <div className="inline-flex items-center gap-2 bg-yellow-500/20 text-yellow-300 px-6 py-3 rounded-full text-sm border border-yellow-500/30">
               <Clock className="h-4 w-4" />
-              <span>Limited Time: Lock in $2,997/month before price increases to $4,997</span>
+              <span>Limited Time: Secure $4,000 upfront + $1,000/month retainer</span>
             </div>
           </div>
         </div>
@@ -1128,13 +649,13 @@ export default function HomePage() {
               <h3 className="font-bold mb-6 text-white text-lg">Product</h3>
               <ul className="space-y-3">
                 <li>
-                  <Link href="#features" className="text-gray-300 hover:text-cyan-400 transition-colors duration-300 flex items-center gap-2 group">
+                  <Link href="/features" className="text-gray-300 hover:text-cyan-400 transition-colors duration-300 flex items-center gap-2 group">
                     <span className="w-1 h-1 bg-cyan-400 rounded-full opacity-0 group-hover:opacity-100 transition-opacity"></span>
                     Features
                   </Link>
                 </li>
                 <li>
-                  <Link href="#pricing" className="text-gray-300 hover:text-cyan-400 transition-colors duration-300 flex items-center gap-2 group">
+                  <Link href="/pricing" className="text-gray-300 hover:text-cyan-400 transition-colors duration-300 flex items-center gap-2 group">
                     <span className="w-1 h-1 bg-cyan-400 rounded-full opacity-0 group-hover:opacity-100 transition-opacity"></span>
                     Pricing
                   </Link>

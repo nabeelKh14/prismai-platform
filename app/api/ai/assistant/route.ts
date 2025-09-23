@@ -60,46 +60,42 @@ BOOKING_REQUEST: {
 }
     `.trim()
 
-    // Create VAPI assistant
-    const vapiResponse = await fetch("https://api.vapi.ai/assistant", {
+    // Create ElevenLabs agent
+    const elevenLabsResponse = await fetch("https://api.elevenlabs.io/v1/convai/agents/create", {
       method: "POST",
       headers: {
-        Authorization: `Bearer ${requireEnv('VAPI_API_KEY')}`,
+        "xi-api-key": String(requireEnv('VAPI_API_KEY')),
         "Content-Type": "application/json",
       },
       body: JSON.stringify({
         name: `${businessName} PrismAI Assistant`,
-        model: {
-          provider: "openai", // VAPI still uses OpenAI for voice, but we use Gemini for chat
-          model: "gpt-4",
-          temperature: 0.7,
-          systemMessage,
+        conversation_config: {
+          agent: {
+            prompt: {
+              prompt: systemMessage,
+            },
+            first_message: greetingMessage || "Hello! Thank you for calling. How can I assist you today?",
+            language: "en",
+          },
+          tts: {
+            voice_id: "21m00Tcm4TlvDq8ikWAM",
+            stability: 0.5,
+            similarity_boost: 0.8,
+          },
         },
-        voice: {
-          provider: "11labs",
-          voiceId: "21m00Tcm4TlvDq8ikWAM",
-          stability: 0.5,
-          similarityBoost: 0.8,
+        platform_integration: {
+          type: "twilio",
         },
-        firstMessage: greetingMessage || "Hello! Thank you for calling. How can I assist you today?",
-        endCallMessage: "Thank you for calling. Have a great day!",
-        recordingEnabled: true,
-        silenceTimeoutSeconds: 30,
-        maxDurationSeconds: 600,
-        backgroundSound: "office",
-        backchannelingEnabled: true,
-        backgroundDenoisingEnabled: true,
-        modelOutputInMessagesEnabled: true,
       }),
     })
 
-    if (!vapiResponse.ok) {
-      const errorText = await vapiResponse.text()
-      console.error('VAPI assistant creation failed:', errorText)
-      throw new ExternalServiceError('VAPI', `Failed to create assistant: ${vapiResponse.statusText}`)
+    if (!elevenLabsResponse.ok) {
+      const errorText = await elevenLabsResponse.text()
+      console.error('ElevenLabs agent creation failed:', errorText)
+      throw new ExternalServiceError('ElevenLabs', `Failed to create agent: ${elevenLabsResponse.statusText}`)
     }
 
-    const assistant = await vapiResponse.json()
+    const agent = await elevenLabsResponse.json()
 
     // Update or create AI configuration
     const configData = {
@@ -108,7 +104,7 @@ BOOKING_REQUEST: {
       greeting_message: greetingMessage || "Hello! Thank you for calling. How can I assist you today?",
       business_hours: businessHours || {},
       services: services || ["General Consultation"],
-      vapi_assistant_id: assistant.id,
+      elevenlabs_agent_id: agent.agent_id,
       updated_at: new Date().toISOString(),
     }
 
@@ -135,7 +131,7 @@ BOOKING_REQUEST: {
 
     return NextResponse.json({
       success: true,
-      assistantId: assistant.id,
+      assistantId: agent.agent_id,
       message: "AI assistant configured successfully",
     })
 })

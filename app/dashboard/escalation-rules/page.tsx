@@ -10,6 +10,7 @@ import { Textarea } from "@/components/ui/textarea"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { Switch } from "@/components/ui/switch"
 import { Plus, Edit, Trash2, Settings } from "lucide-react"
+import DotGrid from '@/components/DotGrid'
 
 export default async function EscalationRulesPage() {
   const supabase = await createClient()
@@ -61,6 +62,19 @@ export default async function EscalationRulesPage() {
 
   return (
     <div className="container mx-auto px-4 py-8">
+      {/* Interactive dot-grid background */}
+      <DotGrid
+        dotSize={2}
+        gap={24}
+        baseColor="#00ffff"
+        activeColor="#ffffff"
+        proximity={120}
+        speedTrigger={50}
+        shockRadius={200}
+        shockStrength={3}
+        className="fixed inset-0 z-0"
+        style={{ opacity: 0.6 }}
+      />
       <div className="mb-8">
         <h1 className="text-3xl font-bold mb-2">Escalation Rules</h1>
         <p className="text-muted-foreground">Configure automatic escalation rules for customer conversations</p>

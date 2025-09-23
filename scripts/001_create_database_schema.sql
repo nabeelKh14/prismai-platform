@@ -76,7 +76,7 @@ CREATE TABLE IF NOT EXISTS public.ai_configs (
   business_hours JSONB DEFAULT '{"monday": {"open": "09:00", "close": "17:00"}, "tuesday": {"open": "09:00", "close": "17:00"}, "wednesday": {"open": "09:00", "close": "17:00"}, "thursday": {"open": "09:00", "close": "17:00"}, "friday": {"open": "09:00", "close": "17:00"}, "saturday": {"open": "10:00", "close": "14:00"}, "sunday": {"closed": true}}',
   services JSONB DEFAULT '["General Consultation", "Appointment Booking", "Information Request"]',
   vapi_phone_number TEXT,
-  vapi_assistant_id TEXT,
+  elevenlabs_agent_id TEXT,
   created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
   updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
   UNIQUE(user_id)

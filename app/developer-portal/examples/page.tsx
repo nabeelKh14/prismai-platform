@@ -6,6 +6,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
 import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
 import { Copy, Check } from 'lucide-react'
+import DotGrid from '@/components/DotGrid'
 import { toast } from 'sonner'
 
 const examples = {
@@ -290,6 +291,19 @@ export default function ExamplesPage() {
 
   return (
     <div className="space-y-6">
+      {/* Interactive dot-grid background */}
+      <DotGrid
+        dotSize={2}
+        gap={24}
+        baseColor="#00ffff"
+        activeColor="#ffffff"
+        proximity={120}
+        speedTrigger={50}
+        shockRadius={200}
+        shockStrength={3}
+        className="fixed inset-0 z-0"
+        style={{ opacity: 0.6 }}
+      />
       <div className="flex items-center justify-between">
         <div>
           <h1 className="text-3xl font-bold">Code Examples</h1>

@@ -109,7 +109,6 @@ const nextConfig = {
         new (require('@next/bundle-analyzer'))({ enabled: true })
       )
     }
-
     return config
   },
 }

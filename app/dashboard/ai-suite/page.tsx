@@ -7,13 +7,13 @@ import { Badge } from "@/components/ui/badge"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { Progress } from "@/components/ui/progress"
 import { Separator } from "@/components/ui/separator"
-import { 
-  Phone, 
-  MessageSquare, 
-  Users, 
-  Mail, 
-  BarChart3, 
-  TrendingUp, 
+import {
+  Phone,
+  MessageSquare,
+  Users,
+  Mail,
+  BarChart3,
+  TrendingUp,
   Activity,
   Zap,
   Target,
@@ -21,6 +21,7 @@ import {
   Rocket,
   Settings
 } from "lucide-react"
+import DotGrid from '@/components/DotGrid'
 
 interface AIService {
   id: string
@@ -109,6 +110,18 @@ export default function AISuitePage() {
         lastUsed: '30 minutes ago'
       },
       features: ['Predictive Models', 'Performance Tracking', 'ROI Analysis', 'Custom Reports']
+    },
+    {
+      id: 'implementation',
+      name: 'Implementation & Support',
+      description: 'Complete setup, training, and ongoing support services',
+      status: 'active',
+      metrics: {
+        usage: 95,
+        performance: 98,
+        lastUsed: '1 day ago'
+      },
+      features: ['Complete Documentation', 'Weekly Strategy Calls', 'Slack Availability', 'Hands-on Training Sessions', '90-day SOP Optimization Plan']
     }
   ]
 
@@ -145,6 +158,7 @@ export default function AISuitePage() {
       case 'chatbot': return <MessageSquare className="h-5 w-5" />
       case 'marketing': return <Mail className="h-5 w-5" />
       case 'analytics': return <BarChart3 className="h-5 w-5" />
+      case 'implementation': return <Settings className="h-5 w-5" />
       default: return <Brain className="h-5 w-5" />
     }
   }
@@ -166,6 +180,19 @@ export default function AISuitePage() {
 
   return (
     <div className="container mx-auto p-6 space-y-6">
+      {/* Interactive dot-grid background */}
+      <DotGrid
+        dotSize={2}
+        gap={24}
+        baseColor="#00ffff"
+        activeColor="#ffffff"
+        proximity={120}
+        speedTrigger={50}
+        shockRadius={200}
+        shockStrength={3}
+        className="fixed inset-0 z-0"
+        style={{ opacity: 0.6 }}
+      />
       {/* Header */}
       <div className="flex items-center justify-between">
         <div>

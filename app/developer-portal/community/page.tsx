@@ -8,6 +8,7 @@ import { Textarea } from '@/components/ui/textarea'
 import { Badge } from '@/components/ui/badge'
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar'
 import { MessageSquare, ThumbsUp, Users, HelpCircle, Lightbulb, Bug } from 'lucide-react'
+import DotGrid from '@/components/DotGrid'
 import { toast } from 'sonner'
 
 // Mock data for demonstration
@@ -79,6 +80,19 @@ export default function CommunityPage() {
 
   return (
     <div className="space-y-6">
+      {/* Interactive dot-grid background */}
+      <DotGrid
+        dotSize={2}
+        gap={24}
+        baseColor="#00ffff"
+        activeColor="#ffffff"
+        proximity={120}
+        speedTrigger={50}
+        shockRadius={200}
+        shockStrength={3}
+        className="fixed inset-0 z-0"
+        style={{ opacity: 0.6 }}
+      />
       <div className="flex items-center justify-between">
         <div>
           <h1 className="text-3xl font-bold">Developer Community</h1>

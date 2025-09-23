@@ -1,3 +1,5 @@
+'use client';
+
 import { Metadata } from 'next'
 import Link from 'next/link'
 import { Button } from '@/components/ui/button'
@@ -12,6 +14,7 @@ import {
   Shield,
   Globe
 } from 'lucide-react'
+import DotGrid from '@/components/DotGrid'
 
 export const metadata: Metadata = {
   title: 'Developer Portal - PrismAI',
@@ -82,6 +85,19 @@ const stats = [
 export default function DeveloperPortalPage() {
   return (
     <div className="space-y-12">
+      {/* Interactive dot-grid background */}
+      <DotGrid
+        dotSize={2}
+        gap={24}
+        baseColor="#00ffff"
+        activeColor="#ffffff"
+        proximity={120}
+        speedTrigger={50}
+        shockRadius={200}
+        shockStrength={3}
+        className="fixed inset-0 z-0"
+        style={{ opacity: 0.6 }}
+      />
       {/* Hero Section */}
       <div className="text-center space-y-6">
         <div className="space-y-4">

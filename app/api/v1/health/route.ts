@@ -120,13 +120,13 @@ export async function GET(request: Request) {
     }
   }
 
-  // Check VAPI connectivity
+  // Check ElevenLabs connectivity
   try {
     const vapiStart = Date.now()
-    const vapiResponse = await fetch('https://api.vapi.ai/assistant', {
+    const vapiResponse = await fetch('https://api.elevenlabs.io/v1/convai/agents', {
       method: 'GET',
       headers: {
-        'Authorization': `Bearer ${requireEnv('VAPI_API_KEY')}`,
+        "xi-api-key": String(requireEnv('VAPI_API_KEY')),
       },
       signal: AbortSignal.timeout(5000), // 5 second timeout
     })
