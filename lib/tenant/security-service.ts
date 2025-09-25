@@ -3,6 +3,9 @@ import { tenantService } from '@/lib/tenant/tenant-service'
 import { logger } from '@/lib/logger'
 import { ValidationError, AuthorizationError } from '@/lib/errors'
 import { createHash, createCipheriv, createDecipheriv, randomBytes } from 'crypto'
+import { internationalTransferService } from '@/lib/compliance/international-transfers'
+import { adequacyDecisionsService } from '@/lib/compliance/adequacy-decisions'
+import { transferImpactAssessmentService } from '@/lib/compliance/transfer-impact-assessments'
 
 // Security event types
 export type SecurityEventType =
@@ -398,6 +401,428 @@ export class TenantSecurityService {
   }
 
   // =====================================
+  // INTERNATIONAL TRANSFER SECURITY CONTROLS
+  // =====================================
+
+  /**
+   * Validate international data transfer
+   */
+  async validateInternationalTransfer(
+    tenantId: string,
+    transferData: {
+      sourceLocation: string
+      destinationLocation: string
+      dataCategories: string[]
+      transferMechanism: string
+      purpose: string
+      legalBasis: string
+    },
+    userId: string
+  ): Promise<{
+    isAllowed: boolean
+    violations: string[]
+    recommendations: string[]
+    requiredAssessments: string[]
+    riskLevel: 'low' | 'medium' | 'high' | 'critical'
+  }> {
+    await tenantService.checkTenantAccess(userId, tenantId)
+
+    const violations: string[] = []
+    const recommendations: string[] = []
+    const requiredAssessments: string[] = []
+
+    try {
+      // Check data residency rules
+      const residencyCheck = await this.checkDataResidencyForTransfer(tenantId, transferData)
+      if (!residencyCheck.compliant) {
+        violations.push(...residencyCheck.violations)
+      }
+
+      // Check country adequacy
+      const adequacyResult = await adequacyDecisionsService.validateAdequacy(transferData.destinationLocation)
+      if (!adequacyResult.isAdequate) {
+        violations.push(`Destination country ${transferData.destinationLocation} lacks adequate data protection`)
+        recommendations.push('Use Standard Contractual Clauses (SCCs) for this transfer')
+        requiredAssessments.push('Transfer Impact Assessment (TIA)')
+      }
+
+      // Check if sensitive data requires additional safeguards
+      const hasSensitiveData = transferData.dataCategories.some(cat =>
+        ['health_data', 'financial_data', 'biometric_data', 'genetic_data'].includes(cat)
+      )
+
+      if (hasSensitiveData) {
+        recommendations.push('Implement enhanced security measures for sensitive data')
+        requiredAssessments.push('Data Protection Impact Assessment (DPIA)')
+      }
+
+      // Determine risk level
+      const riskLevel = this.calculateTransferRiskLevel(violations, adequacyResult, hasSensitiveData)
+
+      // Log security event
+      await this.logSecurityEvent(
+        tenantId,
+        'data_export',
+        riskLevel === 'critical' ? 'high' : 'medium',
+        `International transfer validation: ${transferData.sourceLocation} -> ${transferData.destinationLocation}`,
+        userId,
+        {
+          transferData,
+          violations: violations.length,
+          riskLevel,
+          hasSensitiveData
+        }
+      )
+
+      return {
+        isAllowed: violations.length === 0,
+        violations,
+        recommendations,
+        requiredAssessments,
+        riskLevel
+      }
+    } catch (error) {
+      logger.error('Failed to validate international transfer', error as Error, {
+        tenantId,
+        transferData,
+        userId
+      })
+
+      return {
+        isAllowed: false,
+        violations: ['Transfer validation failed due to system error'],
+        recommendations: ['Contact system administrator'],
+        requiredAssessments: ['Manual review required'],
+        riskLevel: 'critical'
+      }
+    }
+  }
+
+  /**
+   * Enforce data residency for international transfers
+   */
+  async enforceDataResidency(
+    tenantId: string,
+    transferData: {
+      dataCategories: string[]
+      destinationLocation: string
+      enforcementLevel: 'warning' | 'block' | 'redirect'
+    },
+    userId: string
+  ): Promise<{
+    allowed: boolean
+    action: 'allow' | 'block' | 'redirect'
+    message: string
+    alternativeLocations?: string[]
+  }> {
+    await tenantService.checkTenantAccess(userId, tenantId)
+
+    try {
+      const supabase = await this.getSupabase()
+
+      // Get tenant's data residency rules
+      const { data: rules } = await supabase
+        .from('data_residency_rules')
+        .select('*')
+        .eq('tenant_id', tenantId)
+        .eq('is_active', true)
+
+      let allowed = true
+      let action: 'allow' | 'block' | 'redirect' = 'allow'
+      let message = 'Transfer allowed'
+      const alternativeLocations: string[] = []
+
+      for (const dataCategory of transferData.dataCategories) {
+        const applicableRules = rules?.filter(rule =>
+          rule.data_category === dataCategory ||
+          rule.data_category === 'personal_data'
+        ) || []
+
+        for (const rule of applicableRules) {
+          // Check if destination is allowed
+          if (rule.allowed_countries.length > 0 &&
+              !rule.allowed_countries.includes(transferData.destinationLocation)) {
+            allowed = false
+            action = rule.enforcement_level
+            message = `Data residency violation: ${dataCategory} cannot be transferred to ${transferData.destinationLocation}`
+
+            // Find alternative locations
+            alternativeLocations.push(...rule.allowed_countries.filter((country: string) =>
+              country !== transferData.destinationLocation
+            ))
+          }
+
+          // Check if destination is explicitly restricted
+          if (rule.restricted_countries.includes(transferData.destinationLocation)) {
+            allowed = false
+            action = 'block'
+            message = `Data residency violation: ${dataCategory} is restricted from ${transferData.destinationLocation}`
+          }
+        }
+      }
+
+      // Log enforcement action
+      await this.logSecurityEvent(
+        tenantId,
+        'compliance_check',
+        allowed ? 'low' : 'high',
+        `Data residency enforcement: ${allowed ? 'allowed' : 'blocked'}`,
+        userId,
+        {
+          transferData,
+          action,
+          allowed,
+          alternativeLocations
+        }
+      )
+
+      return {
+        allowed,
+        action,
+        message,
+        alternativeLocations: alternativeLocations.length > 0 ? alternativeLocations : undefined
+      }
+    } catch (error) {
+      logger.error('Failed to enforce data residency', error as Error, {
+        tenantId,
+        transferData,
+        userId
+      })
+
+      return {
+        allowed: false,
+        action: 'block',
+        message: 'Data residency check failed - blocking transfer for security'
+      }
+    }
+  }
+
+  /**
+   * Create automated Transfer Impact Assessment
+   */
+  async createAutomatedTIA(
+    tenantId: string,
+    transferDetails: {
+      destinationCountries: string[]
+      dataCategories: string[]
+      transferVolume: 'low' | 'medium' | 'high'
+      purpose: string
+    },
+    userId: string
+  ): Promise<{
+    assessmentId: string
+    riskLevel: string
+    recommendations: string[]
+    requiresManualReview: boolean
+  }> {
+    await tenantService.checkTenantAccess(userId, tenantId)
+
+    try {
+      const assessment = await transferImpactAssessmentService.generateAutomatedTIA(
+        tenantId,
+        transferDetails,
+        userId
+      )
+
+      const requiresManualReview = assessment.riskLevel === 'high' || assessment.riskLevel === 'critical'
+
+      // Log TIA creation
+      await this.logSecurityEvent(
+        tenantId,
+        'compliance_check',
+        requiresManualReview ? 'high' : 'medium',
+        `Automated TIA created for transfer to ${transferDetails.destinationCountries.join(', ')}`,
+        userId,
+        {
+          assessmentId: assessment.id,
+          riskLevel: assessment.riskLevel,
+          requiresManualReview,
+          destinationCountries: transferDetails.destinationCountries
+        }
+      )
+
+      return {
+        assessmentId: assessment.id,
+        riskLevel: assessment.riskLevel,
+        recommendations: assessment.supplementaryMeasures,
+        requiresManualReview
+      }
+    } catch (error) {
+      logger.error('Failed to create automated TIA', error as Error, {
+        tenantId,
+        transferDetails,
+        userId
+      })
+      throw error
+    }
+  }
+
+  /**
+   * Get transfer security statistics
+   */
+  async getTransferSecurityStats(
+    tenantId: string,
+    userId: string,
+    period?: { start: string; end: string }
+  ): Promise<{
+    totalTransfers: number
+    blockedTransfers: number
+    highRiskTransfers: number
+    averageRiskScore: number
+    topDestinations: Array<{ country: string; count: number }>
+    complianceRate: number
+  }> {
+    await tenantService.checkTenantAccess(userId, tenantId)
+
+    const reportPeriod = period || {
+      start: new Date(Date.now() - 30 * 24 * 60 * 60 * 1000).toISOString(),
+      end: new Date().toISOString(),
+    }
+
+    try {
+      const supabase = await this.getSupabase()
+
+      // Get transfer records
+      const { data: transfers } = await supabase
+        .from('international_transfer_records')
+        .select('*')
+        .eq('tenant_id', tenantId)
+        .gte('created_at', reportPeriod.start)
+        .lte('created_at', reportPeriod.end)
+
+      if (!transfers || transfers.length === 0) {
+        return {
+          totalTransfers: 0,
+          blockedTransfers: 0,
+          highRiskTransfers: 0,
+          averageRiskScore: 0,
+          topDestinations: [],
+          complianceRate: 100
+        }
+      }
+
+      const blockedTransfers = transfers.filter(t => t.status === 'blocked').length
+      const highRiskTransfers = transfers.filter(t => t.status === 'failed').length
+      const totalRiskScore = transfers.reduce((sum, t) => sum + (t.metadata.riskScore || 0), 0)
+      const averageRiskScore = totalRiskScore / transfers.length
+
+      // Get top destinations
+      const destinationCounts: Record<string, number> = {}
+      transfers.forEach(transfer => {
+        destinationCounts[transfer.destination_location] =
+          (destinationCounts[transfer.destination_location] || 0) + 1
+      })
+
+      const topDestinations = Object.entries(destinationCounts)
+        .map(([country, count]) => ({ country, count }))
+        .sort((a, b) => b.count - a.count)
+        .slice(0, 5)
+
+      const successfulTransfers = transfers.filter(t => t.status === 'completed').length
+      const complianceRate = (successfulTransfers / transfers.length) * 100
+
+      return {
+        totalTransfers: transfers.length,
+        blockedTransfers,
+        highRiskTransfers,
+        averageRiskScore,
+        topDestinations,
+        complianceRate
+      }
+    } catch (error) {
+      logger.error('Failed to get transfer security stats', error as Error, {
+        tenantId,
+        userId,
+        period
+      })
+
+      return {
+        totalTransfers: 0,
+        blockedTransfers: 0,
+        highRiskTransfers: 0,
+        averageRiskScore: 0,
+        topDestinations: [],
+        complianceRate: 0
+      }
+    }
+  }
+
+  /**
+   * Check if transfer requires additional security measures
+   */
+  async checkTransferSecurityRequirements(
+    tenantId: string,
+    transferData: {
+      dataCategories: string[]
+      destinationLocation: string
+      transferMechanism: string
+    }
+  ): Promise<{
+    requiresEncryption: boolean
+    requiresAuditLogging: boolean
+    requiresAccessControls: boolean
+    requiresDataMinimization: boolean
+    securityMeasures: string[]
+  }> {
+    const securityMeasures: string[] = []
+    let requiresEncryption = false
+    let requiresAuditLogging = true // Always required for international transfers
+    let requiresAccessControls = true // Always required for international transfers
+    let requiresDataMinimization = false
+
+    try {
+      // Check if data categories require encryption
+      const sensitiveCategories = ['health_data', 'financial_data', 'biometric_data', 'genetic_data']
+      requiresEncryption = transferData.dataCategories.some(cat =>
+        sensitiveCategories.includes(cat)
+      )
+
+      if (requiresEncryption) {
+        securityMeasures.push('End-to-end encryption required')
+        securityMeasures.push('Encryption key management')
+        securityMeasures.push('Secure key exchange protocols')
+      }
+
+      // Check destination country risk
+      const adequacyResult = await adequacyDecisionsService.validateAdequacy(transferData.destinationLocation)
+      if (!adequacyResult.isAdequate) {
+        requiresDataMinimization = true
+        securityMeasures.push('Data minimization principles')
+        securityMeasures.push('Purpose limitation enforcement')
+        securityMeasures.push('Regular data retention reviews')
+      }
+
+      // Add standard security measures for international transfers
+      securityMeasures.push('Comprehensive audit logging')
+      securityMeasures.push('Access control and authentication')
+      securityMeasures.push('Data classification and labeling')
+      securityMeasures.push('Incident response procedures')
+
+      return {
+        requiresEncryption,
+        requiresAuditLogging,
+        requiresAccessControls,
+        requiresDataMinimization,
+        securityMeasures
+      }
+    } catch (error) {
+      logger.error('Failed to check transfer security requirements', error as Error, {
+        tenantId,
+        transferData
+      })
+
+      // Return conservative defaults on error
+      return {
+        requiresEncryption: true,
+        requiresAuditLogging: true,
+        requiresAccessControls: true,
+        requiresDataMinimization: true,
+        securityMeasures: ['All security measures required due to validation error']
+      }
+    }
+  }
+
+  // =====================================
   // PRIVATE HELPERS
   // =====================================
 
@@ -567,6 +992,68 @@ export class TenantSecurityService {
     // For now, we'll use a tenant-specific key derivation
     const keyMaterial = `tenant-${tenantId}-encryption-key`
     return createHash('sha256').update(keyMaterial).digest().slice(0, this.KEY_LENGTH)
+  }
+
+  private async checkDataResidencyForTransfer(
+    tenantId: string,
+    transferData: {
+      sourceLocation: string
+      destinationLocation: string
+      dataCategories: string[]
+      transferMechanism: string
+      purpose: string
+      legalBasis: string
+    }
+  ): Promise<{
+    compliant: boolean
+    violations: string[]
+  }> {
+    const supabase = await this.getSupabase()
+
+    // Get tenant's data residency rules
+    const { data: rules } = await supabase
+      .from('data_residency_rules')
+      .select('*')
+      .eq('tenant_id', tenantId)
+      .eq('is_active', true)
+
+    const violations: string[] = []
+
+    for (const dataCategory of transferData.dataCategories) {
+      const applicableRules = rules?.filter(rule =>
+        rule.data_category === dataCategory ||
+        rule.data_category === 'personal_data'
+      ) || []
+
+      for (const rule of applicableRules) {
+        // Check if destination is allowed
+        if (rule.allowed_countries.length > 0 &&
+            !rule.allowed_countries.includes(transferData.destinationLocation)) {
+          violations.push(`${dataCategory} cannot be transferred to ${transferData.destinationLocation}`)
+        }
+
+        // Check if destination is explicitly restricted
+        if (rule.restricted_countries.includes(transferData.destinationLocation)) {
+          violations.push(`${dataCategory} is restricted from ${transferData.destinationLocation}`)
+        }
+      }
+    }
+
+    return {
+      compliant: violations.length === 0,
+      violations
+    }
+  }
+
+  private calculateTransferRiskLevel(
+    violations: string[],
+    adequacyResult: { isAdequate: boolean; requiresAdditionalSafeguards: boolean },
+    hasSensitiveData: boolean
+  ): 'low' | 'medium' | 'high' | 'critical' {
+    if (violations.length > 0) return 'critical'
+    if (!adequacyResult.isAdequate) return 'high'
+    if (adequacyResult.requiresAdditionalSafeguards || hasSensitiveData) return 'medium'
+    return 'low'
   }
 }
 

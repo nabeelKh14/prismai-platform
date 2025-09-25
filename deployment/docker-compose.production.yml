@@ -1,0 +1,248 @@
+# ==============================================================================
+# DOCKER COMPOSE PRODUCTION STACK
+# PrismAI - Complete Production Environment
+# ==============================================================================
+
+version: '3.8'
+
+services:
+  # Main application
+  prismai-app:
+    build:
+      context: ..
+      dockerfile: deployment/docker/Dockerfile
+      target: runner
+    container_name: prismai-production
+    restart: unless-stopped
+    environment:
+      - NODE_ENV=production
+    env_file:
+      - ../deployment/environments/production.env
+    ports:
+      - "3000:3000"
+    volumes:
+      - uploads:/app/uploads
+      - logs:/app/logs
+    networks:
+      - prismai-network
+    depends_on:
+      - redis
+      - postgres
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:3000/api/v1/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
+
+  # Redis cache
+  redis:
+    image: redis:7-alpine
+    container_name: prismai-redis
+    restart: unless-stopped
+    command: redis-server --appendonly yes --maxmemory 256mb --maxmemory-policy allkeys-lru
+    volumes:
+      - redis_data:/data
+    networks:
+      - prismai-network
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+
+  # PostgreSQL database
+  postgres:
+    image: postgres:15-alpine
+    container_name: prismai-postgres
+    restart: unless-stopped
+    environment:
+      - POSTGRES_DB=prismai
+      - POSTGRES_USER=prismai_user
+      - POSTGRES_PASSWORD=${DB_PASSWORD}
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+      - ../scripts:/docker-entrypoint-initdb.d
+    networks:
+      - prismai-network
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U prismai_user -d prismai"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+
+  # Nginx reverse proxy
+  nginx:
+    image: nginx:alpine
+    container_name: prismai-nginx
+    restart: unless-stopped
+    ports:
+      - "80:80"
+      - "443:443"
+    volumes:
+      - ../nginx.conf:/etc/nginx/nginx.conf:ro
+      - ../ssl:/etc/nginx/ssl:ro
+      - logs:/var/log/nginx
+    networks:
+      - prismai-network
+    depends_on:
+      - prismai-app
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+
+  # Prometheus monitoring
+  prometheus:
+    image: prom/prometheus:latest
+    container_name: prismai-prometheus
+    restart: unless-stopped
+    command:
+      - '--config.file=/etc/prometheus/prometheus.yml'
+      - '--storage.tsdb.path=/prometheus'
+      - '--web.console.libraries=/etc/prometheus/console_libraries'
+      - '--web.console.templates=/etc/prometheus/consoles'
+      - '--storage.tsdb.retention.time=200h'
+      - '--web.enable-lifecycle'
+    volumes:
+      - ../deployment/monitoring/prometheus.yml:/etc/prometheus/prometheus.yml:ro
+      - ../deployment/monitoring/alert-rules.yml:/etc/prometheus/rules/alerts.yml:ro
+      - prometheus_data:/prometheus
+    networks:
+      - prismai-network
+    ports:
+      - "9090:9090"
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost/-/healthy"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+
+  # Grafana dashboards
+  grafana:
+    image: grafana/grafana:latest
+    container_name: prismai-grafana
+    restart: unless-stopped
+    environment:
+      - GF_SECURITY_ADMIN_PASSWORD=${GRAFANA_PASSWORD}
+      - GF_USERS_ALLOW_SIGN_UP=false
+    volumes:
+      - grafana_data:/var/lib/grafana
+      - ../deployment/monitoring/dashboards:/var/lib/grafana/dashboards:ro
+    networks:
+      - prismai-network
+    ports:
+      - "3001:3000"
+    depends_on:
+      - prometheus
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost/api/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+
+  # Alertmanager
+  alertmanager:
+    image: prom/alertmanager:latest
+    container_name: prismai-alertmanager
+    restart: unless-stopped
+    command:
+      - '--config.file=/etc/alertmanager/alertmanager.yml'
+      - '--storage.path=/alertmanager'
+    volumes:
+      - ../deployment/monitoring/alertmanager.yml:/etc/alertmanager/alertmanager.yml:ro
+      - alertmanager_data:/alertmanager
+    networks:
+      - prismai-network
+    ports:
+      - "9093:9093"
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost/-/healthy"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+
+  # Node exporter for system metrics
+  node-exporter:
+    image: prom/node-exporter:latest
+    container_name: prismai-node-exporter
+    restart: unless-stopped
+    volumes:
+      - /proc:/host/proc:ro
+      - /sys:/host/sys:ro
+      - /:/rootfs:ro
+    command:
+      - '--path.procfs=/host/proc'
+      - '--path.rootfs=/rootfs'
+      - '--path.sysfs=/host/sys'
+      - '--collector.filesystem.mount-points-exclude=^/(sys|proc|dev|host|etc)($$|/)'
+    networks:
+      - prismai-network
+    ports:
+      - "9100:9100"
+
+  # Filebeat for log shipping
+  filebeat:
+    image: elastic/filebeat:8.11.0
+    container_name: prismai-filebeat
+    restart: unless-stopped
+    user: root
+    volumes:
+      - logs:/var/log/prismai:ro
+      - ./filebeat.yml:/usr/share/filebeat/filebeat.yml:ro
+    networks:
+      - prismai-network
+    environment:
+      - ELASTICSEARCH_HOSTS=${ELASTICSEARCH_HOSTS}
+      - ELASTICSEARCH_USERNAME=${ELASTICSEARCH_USERNAME}
+      - ELASTICSEARCH_PASSWORD=${ELASTICSEARCH_PASSWORD}
+
+  # Backup service
+  backup:
+    image: postgres:15-alpine
+    container_name: prismai-backup
+    restart: unless-stopped
+    environment:
+      - POSTGRES_DB=prismai
+      - POSTGRES_USER=prismai_user
+      - POSTGRES_PASSWORD=${DB_PASSWORD}
+      - PGDATA=/var/lib/postgresql/data/pgdata
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+      - backups:/backups
+    networks:
+      - prismai-network
+    command: |
+      bash -c "
+        while true; do
+          pg_dump -h postgres -U prismai_user prismai > /backups/backup-\$(date +\%Y\%m\%d\%H\%M\%S).sql
+          find /backups -name 'backup-*.sql' -mtime +7 -delete
+          sleep 86400
+        done
+      "
+
+networks:
+  prismai-network:
+    driver: bridge
+    ipam:
+      config:
+        - subnet: 172.20.0.0/16
+
+volumes:
+  uploads:
+    driver: local
+  logs:
+    driver: local
+  redis_data:
+    driver: local
+  postgres_data:
+    driver: local
+  prometheus_data:
+    driver: local
+  grafana_data:
+    driver: local
+  alertmanager_data:
+    driver: local
+  backups:
+    driver: local

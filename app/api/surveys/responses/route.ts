@@ -40,7 +40,8 @@ export async function POST(request: NextRequest) {
     }
 
     // Validate responses against template questions
-    const questions = survey.survey_templates?.questions || []
+    const template = survey.survey_templates as any
+    const questions = template?.questions || []
     const questionMap = new Map(questions.map((q: any) => [q.id, q]))
 
     for (const response of responses) {
@@ -51,9 +52,9 @@ export async function POST(request: NextRequest) {
         }, { status: 400 })
       }
 
-      if (question.required && (!response.response_value || response.response_value.trim() === '')) {
+      if ((question as any).required && (!response.response_value || response.response_value.trim() === '')) {
         return NextResponse.json({
-          error: `Response required for question: ${question.question}`
+          error: `Response required for question: ${(question as any).question}`
         }, { status: 400 })
       }
     }

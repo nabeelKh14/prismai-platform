@@ -163,8 +163,8 @@ export class EnhancedSlidingWindowRateLimiter {
       requestCount: info.count,
       remaining: info.remaining,
       resetTime: info.resetTime,
-      windowStart: info.windowStart,
-      windowEnd: info.windowEnd,
+      windowStart: info.windowStart || 0,
+      windowEnd: info.windowEnd || 0,
     }
   }
 }

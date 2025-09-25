@@ -212,7 +212,7 @@ export class LeadGenerationService {
         assignedTests
       }
 
-    } catch (error) {
+    } catch (error: any) {
       logger.error('Error processing new lead:', error)
       throw error
     }
@@ -266,7 +266,7 @@ export class LeadGenerationService {
         await this.checkEngagementTriggers(leadId, eventType, channel, lead.user_id)
       }
 
-    } catch (error) {
+    } catch (error: any) {
       logger.error('Error processing engagement event:', error)
     }
   }
@@ -320,7 +320,7 @@ export class LeadGenerationService {
         recommendations: await this.generateRecommendations(lead, insights, engagementScore)
       }
 
-    } catch (error) {
+    } catch (error: any) {
       logger.error('Error generating lead insights:', error)
       throw error
     }
@@ -345,7 +345,7 @@ export class LeadGenerationService {
 
       logger.info('Lead generation optimization cycle completed')
 
-    } catch (error) {
+    } catch (error: any) {
       logger.error('Error running optimization cycle:', error)
     }
   }
@@ -386,7 +386,7 @@ export class LeadGenerationService {
 
       return triggered
 
-    } catch (error) {
+    } catch (error: any) {
       logger.error('Error triggering workflows:', error)
       return []
     }
@@ -406,7 +406,7 @@ export class LeadGenerationService {
 
       return assigned
 
-    } catch (error) {
+    } catch (error: any) {
       logger.error('Error assigning to tests:', error)
       return []
     }
@@ -431,7 +431,7 @@ export class LeadGenerationService {
           }
         })
 
-    } catch (error) {
+    } catch (error: any) {
       logger.error('Error tracking attribution:', error)
     }
   }
@@ -459,7 +459,7 @@ export class LeadGenerationService {
       const scoring = await EnhancedLeadScoringEngine.calculateLeadScore(leadData)
       return scoring.score
 
-    } catch (error) {
+    } catch (error: any) {
       logger.error('Error recalculating lead score:', error)
       return null
     }
@@ -484,7 +484,7 @@ export class LeadGenerationService {
         }
       }
 
-    } catch (error) {
+    } catch (error: any) {
       logger.error('Error checking engagement triggers:', error)
     }
   }
@@ -519,7 +519,7 @@ Respond in JSON format.`
 
       return JSON.parse(response.choices[0]?.message?.content || '{}')
 
-    } catch (error) {
+    } catch (error: any) {
       logger.error('Error generating AI insights:', error)
       return {}
     }
@@ -582,7 +582,7 @@ Respond in JSON format.`
         }
       }
 
-    } catch (error) {
+    } catch (error: any) {
       logger.error('Error retraining models:', error)
     }
   }
@@ -603,7 +603,7 @@ Respond in JSON format.`
       for (const workflow of workflows || []) {
         const executions = workflow.workflow_executions || []
         const completionRate = executions.length > 0
-          ? executions.filter(e => e.status === 'completed').length / executions.length
+          ? executions.filter((e: any) => e.status === 'completed').length / executions.length
           : 0
 
         if (completionRate < 0.5) {
@@ -611,7 +611,7 @@ Respond in JSON format.`
         }
       }
 
-    } catch (error) {
+    } catch (error: any) {
       logger.error('Error optimizing workflows:', error)
     }
   }
@@ -631,7 +631,7 @@ Respond in JSON format.`
         logger.info(`Refreshing dynamic segment ${segment.name}`)
       }
 
-    } catch (error) {
+    } catch (error: any) {
       logger.error('Error refreshing segments:', error)
     }
   }

@@ -1,6 +1,5 @@
 'use client';
 
-import { Metadata } from 'next'
 import Link from 'next/link'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
@@ -15,11 +14,6 @@ import {
   Globe
 } from 'lucide-react'
 import DotGrid from '@/components/DotGrid'
-
-export const metadata: Metadata = {
-  title: 'Developer Portal - PrismAI',
-  description: 'Welcome to the PrismAI Developer Portal. Get started with our APIs.',
-}
 
 const features = [
   {

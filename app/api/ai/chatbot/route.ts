@@ -3,6 +3,8 @@ import { createClient } from "@/lib/supabase/server"
 import { z } from "zod"
 import { withErrorHandling, ValidationError, AuthenticationError } from "@/lib/errors"
 import { geminiClient } from "@/lib/ai/gemini-client"
+import { withAuth } from "@/lib/auth"
+import { logger } from "@/lib/logger"
 
 // Validation schemas
 const chatMessageSchema = z.object({
@@ -13,12 +15,7 @@ const chatMessageSchema = z.object({
   metadata: z.record(z.any()).optional(),
 })
 
-const knowledgeBaseSchema = z.object({
-  title: z.string().min(1).max(200),
-  content: z.string().min(10).max(10000),
-  category: z.string().optional(),
-  tags: z.array(z.string()).optional(),
-})
+// Knowledge base schema (for future use)
 
 // Advanced AI Chatbot Engine
 class ChatbotEngine {
@@ -144,7 +141,6 @@ Guidelines:
 
       // Fallback to keyword search if vector search fails
       console.warn('Vector search failed, falling back to keyword search')
-      const queryWords = query.toLowerCase().split(' ')
 
       return knowledgeBase
         .map(kb => ({
@@ -157,7 +153,6 @@ Guidelines:
     } catch (error) {
       console.error('Error in knowledge base search:', error)
       // Final fallback to keyword search
-      const queryWords = query.toLowerCase().split(' ')
 
       return knowledgeBase
         .map(kb => ({
@@ -209,11 +204,18 @@ Guidelines:
   }
 }
 
-// Handle chat messages
-export const POST = withErrorHandling(async (request: NextRequest) => {
-  const supabase = await createClient()
-  const body = await request.json()
-  const validatedData = chatMessageSchema.parse(body)
+// Handle chat messages with authentication
+export const POST = withAuth(
+  withErrorHandling(async (request: NextRequest, authContext) => {
+    // Log authenticated access
+    logger.info('Chatbot API accessed', {
+      userId: authContext?.user?.id,
+      path: request.nextUrl.pathname
+    })
+
+    const supabase = await createClient()
+    const body = await request.json()
+    const validatedData = chatMessageSchema.parse(body)
 
   // Get or create conversation
   let conversationId = validatedData.conversationId
@@ -225,7 +227,7 @@ export const POST = withErrorHandling(async (request: NextRequest) => {
       .select('*')
       .eq('id', conversationId)
       .single()
-    
+
     conversation = existingConversation
   }
 
@@ -266,6 +268,13 @@ export const POST = withErrorHandling(async (request: NextRequest) => {
   }
 
   // Perform sentiment analysis on customer messages
+  // Get conversation history before any downstream analysis that may reference it
+  const { data: conversationHistory } = await supabase
+    .from('chat_messages')
+    .select('*')
+    .eq('conversation_id', conversationId)
+    .order('created_at', { ascending: true })
+
   if (validatedData.message && validatedData.message.trim().length > 0) {
     try {
       const sentimentResponse = await fetch(`${process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000'}/api/ai/sentiment`, {
@@ -276,7 +285,7 @@ export const POST = withErrorHandling(async (request: NextRequest) => {
         body: JSON.stringify({
           message: validatedData.message,
           conversationId: conversationId,
-          context: conversationHistory?.slice(-5).map(msg => ({
+          context: (conversationHistory || []).slice(-5).map((msg: any) => ({
             sender_type: msg.sender_type,
             content: msg.content,
             created_at: msg.created_at
@@ -322,12 +331,7 @@ export const POST = withErrorHandling(async (request: NextRequest) => {
     throw new Error(`Failed to save message: ${saveMessageError.message}`)
   }
 
-  // Get conversation history
-  const { data: conversationHistory } = await supabase
-    .from('chat_messages')
-    .select('*')
-    .eq('conversation_id', conversationId)
-    .order('created_at', { ascending: true })
+  // conversationHistory already fetched above
 
   // Get business context (from user_id if available, or default)
   const businessContext = {
@@ -467,47 +471,68 @@ export const POST = withErrorHandling(async (request: NextRequest) => {
     suggestedActions: aiResponse.suggestedActions,
     bookingDetected: bookingCheck.isBookingRequest
   })
-})
-
-// Get conversation history
-export const GET = withErrorHandling(async (request: NextRequest) => {
-  const { searchParams } = new URL(request.url)
-  const conversationId = searchParams.get('conversationId')
-  const customerIdentifier = searchParams.get('customerIdentifier')
-
-  if (!conversationId && !customerIdentifier) {
-    throw new ValidationError('Either conversationId or customerIdentifier is required')
+  }),
+  {
+    requireAuth: true,
+    rateLimit: true,
+    validateInput: true,
+    logAccess: true
   }
+)
 
-  const supabase = await createClient()
+// Get conversation history with authentication
+export const GET = withAuth(
+  withErrorHandling(async (request: NextRequest, authContext) => {
+    // Log authenticated access
+    logger.info('Chatbot history API accessed', {
+      userId: authContext?.user?.id,
+      path: request.nextUrl.pathname
+    })
 
-  let query = supabase
-    .from('chat_conversations')
-    .select(`
-      *,
-      chat_messages (
-        id,
-        sender_type,
-        content,
-        message_type,
-        metadata,
-        created_at
-      )
-    `)
+    const { searchParams } = new URL(request.url)
+    const conversationId = searchParams.get('conversationId')
+    const customerIdentifier = searchParams.get('customerIdentifier')
 
-  if (conversationId) {
-    query = query.eq('id', conversationId)
-  } else {
-    query = query.eq('customer_identifier', customerIdentifier)
+    if (!conversationId && !customerIdentifier) {
+      throw new ValidationError('Either conversationId or customerIdentifier is required')
+    }
+
+    const supabase = await createClient()
+
+    let query = supabase
+      .from('chat_conversations')
+      .select(`
+        *,
+        chat_messages (
+          id,
+          sender_type,
+          content,
+          message_type,
+          metadata,
+          created_at
+        )
+      `)
+
+    if (conversationId) {
+      query = query.eq('id', conversationId)
+    } else {
+      query = query.eq('customer_identifier', customerIdentifier)
+    }
+
+    const { data: conversations, error } = await query.order('created_at', { ascending: false })
+
+    if (error) {
+      throw new Error(`Failed to fetch conversation: ${error.message}`)
+    }
+
+    return NextResponse.json({
+      conversations: conversations || []
+    })
+  }),
+  {
+    requireAuth: true,
+    rateLimit: true,
+    validateInput: true,
+    logAccess: true
   }
-
-  const { data: conversations, error } = await query.order('created_at', { ascending: false })
-
-  if (error) {
-    throw new Error(`Failed to fetch conversation: ${error.message}`)
-  }
-
-  return NextResponse.json({
-    conversations: conversations || []
-  })
-})
+)

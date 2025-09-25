@@ -9,7 +9,7 @@ import { logger } from '@/lib/logger'
 export interface EngagementEvent {
   leadId: string
   channel: 'email' | 'website' | 'social' | 'ads' | 'direct' | 'referral'
-  type: 'view' | 'click' | 'download' | 'share' | 'comment' | 'like' | 'follow' | 'unsubscribe' | 'bounce'
+  type: 'view' | 'click' | 'download' | 'share' | 'comment' | 'like' | 'follow' | 'unsubscribe' | 'bounce' | 'open' | 'form_submit'
   contentId?: string
   metadata: Record<string, any>
   timestamp: Date
@@ -236,7 +236,7 @@ export class EngagementTracker {
   async trackEmailEngagement(
     leadId: string,
     emailId: string,
-    eventType: 'open' | 'click' | 'bounce' | 'unsubscribe',
+    eventType: 'click' | 'unsubscribe' | 'bounce',
     metadata: Record<string, any> = {}
   ): Promise<void> {
     await this.trackEvent({
@@ -258,7 +258,7 @@ export class EngagementTracker {
   async trackWebsiteEngagement(
     leadId: string,
     pageUrl: string,
-    eventType: 'view' | 'click' | 'download' | 'form_submit',
+    eventType: 'view' | 'click' | 'download',
     sessionId: string,
     metadata: Record<string, any> = {}
   ): Promise<void> {

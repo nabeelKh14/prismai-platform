@@ -191,13 +191,13 @@ export default async function AnalyticsPage() {
                   {} as Record<string, number>,
                 ),
               ).map(([service, count]) => {
-                const percentage = Math.round((count / bookings.length) * 100)
+                const percentage = Math.round(((count as number) / (bookings?.length || 1)) * 100)
                 return (
                   <div key={service} className="space-y-2">
                     <div className="flex justify-between text-sm">
                       <span>{service}</span>
                       <span>
-                        {count} bookings ({percentage}%)
+                        {String(count)} bookings ({percentage}%)
                       </span>
                     </div>
                     <div className="bg-muted rounded-full h-2">

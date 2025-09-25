@@ -40,7 +40,7 @@ CREATE TABLE IF NOT EXISTS public.demo_sessions (
   session_name TEXT NOT NULL,
   scenario TEXT, -- Pre-defined demo scenario
   status TEXT CHECK (status IN ('active', 'completed', 'paused')) DEFAULT 'active',
-  recording_enabled BOOLEAN DEFAULT true,
+  recording_enabled BOOLEAN DEFAULT false, -- PRIVACY BY DESIGN: Default to false to prevent unauthorized recording - users must explicitly consent to recording
   metrics JSONB DEFAULT '{}', -- Real-time metrics during demo
   conversation_id UUID REFERENCES public.unified_conversations(id),
   created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),

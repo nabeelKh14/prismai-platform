@@ -5,12 +5,16 @@ import { logger } from '@/lib/logger'
 import { SecurityAudit } from '@/lib/security'
 
 export class CRMService {
-  private supabase = createClient()
+  private supabasePromise = createClient()
+  private async getClient() {
+    return await this.supabasePromise
+  }
 
   // Configuration management
   async getCRMConfig(userId: string, provider: string): Promise<CRMConfig | null> {
     try {
-      const { data, error } = await this.supabase
+      const supabase = await this.getClient()
+      const { data, error } = await supabase
         .from('crm_configs')
         .select('*')
         .eq('user_id', userId)
@@ -30,7 +34,8 @@ export class CRMService {
 
   async saveCRMConfig(config: Omit<CRMConfig, 'id' | 'createdAt' | 'updatedAt'>): Promise<CRMConfig> {
     try {
-      const { data, error } = await this.supabase
+      const supabase = await this.getClient()
+      const { data, error } = await supabase
         .from('crm_configs')
         .upsert({
           ...config,
@@ -58,7 +63,8 @@ export class CRMService {
 
   async getActiveCRMConfigs(userId: string): Promise<CRMConfig[]> {
     try {
-      const { data, error } = await this.supabase
+      const supabase = await this.getClient()
+      const { data, error } = await supabase
         .from('crm_configs')
         .select('*')
         .eq('user_id', userId)
@@ -75,7 +81,8 @@ export class CRMService {
   // Customer data management
   async getCustomer(userId: string, provider: string, externalId: string): Promise<CustomerData | null> {
     try {
-      const { data, error } = await this.supabase
+      const supabase = await this.getClient()
+      const { data, error } = await supabase
         .from('crm_customers')
         .select('*')
         .eq('user_id', userId)
@@ -94,12 +101,14 @@ export class CRMService {
     }
   }
 
-  async saveCustomer(customer: Omit<CustomerData, 'id' | 'createdAt' | 'updatedAt'>): Promise<CustomerData> {
+  async saveCustomer(customer: any): Promise<CustomerData> {
     try {
-      const { data, error } = await this.supabase
+      const supabase = await this.getClient()
+      const { data, error } = await supabase
         .from('crm_customers')
         .upsert({
           ...customer,
+          user_id: customer.userId ?? customer.user_id,
           updated_at: new Date().toISOString()
         })
         .select()
@@ -119,7 +128,8 @@ export class CRMService {
 
   async searchCustomers(userId: string, query: string, provider?: string): Promise<CustomerData[]> {
     try {
-      let queryBuilder = this.supabase
+      const supabase = await this.getClient()
+      let queryBuilder = supabase
         .from('crm_customers')
         .select('*')
         .eq('user_id', userId)
@@ -151,7 +161,8 @@ export class CRMService {
 
       if (context) {
         // Save context to database
-        await this.supabase
+        const supabase = await this.getClient()
+        await supabase
           .from('crm_conversation_context')
           .upsert({
             conversation_id: conversationId,
@@ -181,7 +192,8 @@ export class CRMService {
 
   async getConversationContext(conversationId: string, customerId: string, provider: string): Promise<ConversationContext | null> {
     try {
-      const { data, error } = await this.supabase
+      const supabase2 = await this.getClient()
+      const { data, error } = await supabase2
         .from('crm_conversation_context')
         .select('*')
         .eq('conversation_id', conversationId)
@@ -258,14 +270,19 @@ export class CRMService {
       }
 
       // Update last sync time
-      await this.supabase
+      {
+        const supabase = await this.getClient()
+        await supabase
         .from('crm_configs')
         .update({ last_sync_at: result.lastSyncAt.toISOString() })
         .eq('user_id', userId)
         .eq('provider', provider)
+      }
 
       // Log sync result
-      await this.supabase
+      {
+        const supabase = await this.getClient()
+        await supabase
         .from('crm_sync_logs')
         .insert({
           user_id: userId,
@@ -276,6 +293,7 @@ export class CRMService {
           errors: errors.length > 0 ? errors : undefined,
           completed_at: result.lastSyncAt.toISOString()
         })
+      }
 
       result.success = errors.length === 0
       result.syncedCount = syncedCount
@@ -311,7 +329,8 @@ export class CRMService {
       const externalActivityId = await connector.logActivity(customerId, activity)
 
       // Log to our database
-      await this.supabase
+      const supabase = await this.getClient()
+      await supabase
         .from('crm_activity_logs')
         .insert({
           user_id: userId,

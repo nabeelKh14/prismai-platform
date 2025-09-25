@@ -291,8 +291,8 @@ async function updateDynamicSegmentMembership(supabase: any, segmentId: string, 
     const matchingLeads = await applyDynamicSegmentCriteria(supabase, userId, criteria)
 
     // Add new membership
-    if (matchingLeads.length > 0) {
-      const membershipData = matchingLeads.map(lead => ({
+      if (matchingLeads.length > 0) {
+      const membershipData = matchingLeads.map((lead: any) => ({
         segment_id: segmentId,
         lead_id: lead.id
       }))

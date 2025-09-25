@@ -3,6 +3,7 @@ import { createClient } from "@/lib/supabase/server"
 import { z } from "zod"
 import { withErrorHandling, ValidationError, AuthenticationError, ExternalServiceError } from "@/lib/errors"
 import { requireEnv } from "@/lib/env"
+import { VAPIClient } from "@/lib/ai/vapi-client"
 
 // Validation schema
 const initiateCallSchema = z.object({
@@ -24,26 +25,16 @@ export const POST = withErrorHandling(async (request: NextRequest) => {
   const body = await request.json()
   const { phoneNumber, assistantId } = initiateCallSchema.parse(body)
 
-    // Make call using ElevenLabs
-    const elevenLabsResponse = await fetch("https://api.elevenlabs.io/v1/convai/conversations", {
-      method: "POST",
-      headers: {
-        "xi-api-key": String(requireEnv('VAPI_API_KEY')),
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify({
-        agent_id: assistantId,
-        phone_number: phoneNumber,
-      }),
-    })
+    // Make call using VAPI
+    const vapiClient = new VAPIClient({ apiKey: String(requireEnv('VAPI_API_KEY')) })
 
-    if (!elevenLabsResponse.ok) {
-      const errorText = await elevenLabsResponse.text()
-      console.error('ElevenLabs call initiation failed:', errorText)
-      throw new ExternalServiceError('ElevenLabs', `Failed to initiate call: ${elevenLabsResponse.statusText}`)
+    let callResult
+    try {
+      callResult = await vapiClient.makeCall(phoneNumber, assistantId)
+    } catch (error) {
+      console.error('VAPI call initiation failed:', error)
+      throw new ExternalServiceError('VAPI', `Failed to initiate call: ${error instanceof Error ? error.message : 'Unknown error'}`)
     }
-
-    const callResult = await elevenLabsResponse.json()
 
     // Log the call in database
     const { error: logError } = await supabase.from("call_logs").insert({
@@ -60,7 +51,7 @@ export const POST = withErrorHandling(async (request: NextRequest) => {
 
     return NextResponse.json({
       success: true,
-      callId: callResult.conversation_id,
+      callId: callResult.id,
       status: "ringing",
     })
 })

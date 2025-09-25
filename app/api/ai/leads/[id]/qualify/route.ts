@@ -1,7 +1,6 @@
 import { type NextRequest, NextResponse } from "next/server"
 import { createClient } from "@/lib/supabase/server"
-import { z } from "zod"
-import { withErrorHandling, ValidationError, AuthenticationError, NotFoundError } from "@/lib/errors"
+import { withErrorHandling, AuthenticationError, NotFoundError } from "@/lib/errors"
 import { geminiClient } from "@/lib/ai/gemini-client"
 
 // AI Lead Qualification Engine
@@ -63,7 +62,6 @@ Consider BANT criteria (Budget, Authority, Need, Timeline) and modern sales qual
       let score = leadData.lead_score || 0
       
       // Simple qualification logic as fallback
-      const hasEmail = !!leadData.email
       const hasCompany = !!leadData.company
       const hasJobTitle = !!leadData.job_title
       const hasBusinessEmail = leadData.email && !['gmail.com', 'yahoo.com', 'hotmail.com'].some(domain => 
@@ -148,7 +146,7 @@ Best regards,
 // Qualify a specific lead
 export const POST = withErrorHandling(async (
   request: NextRequest,
-  { params }: { params: { id: string } }
+  context: { params: Promise<{ id: string }> }
 ) => {
   const supabase = await createClient()
   const {
@@ -160,7 +158,7 @@ export const POST = withErrorHandling(async (
     throw new AuthenticationError()
   }
 
-  const leadId = params.id
+  const { id: leadId } = await context.params
 
   // Fetch lead data
   const { data: lead, error: fetchError } = await supabase

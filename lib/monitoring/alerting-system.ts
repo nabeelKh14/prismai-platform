@@ -2,6 +2,7 @@ import { createClient } from '@/lib/supabase/server'
 import { logger } from '@/lib/logger'
 import { performanceMonitor } from './performance-monitor'
 import { AuthMonitor } from './auth-monitor'
+import { notificationService } from './notification-service'
 
 export type AlertSeverity = 'low' | 'medium' | 'high' | 'critical'
 export type AlertType =
@@ -14,7 +15,7 @@ export type AlertType =
   | 'external_service_down'
   | 'custom'
 
-export type AlertChannel = 'email' | 'slack' | 'webhook' | 'sms' | 'dashboard'
+export type AlertChannel = 'email' | 'slack' | 'webhook' | 'sms' | 'whatsapp' | 'dashboard'
 
 export interface AlertRule {
   id: string
@@ -309,62 +310,29 @@ export class AlertingSystem {
    * Send notification via specified channel
    */
   private async sendNotification(channel: AlertChannel, alert: Omit<Alert, 'id'>): Promise<void> {
-    switch (channel) {
-      case 'email':
-        await this.sendEmailNotification(alert)
-        break
-      case 'slack':
-        await this.sendSlackNotification(alert)
-        break
-      case 'webhook':
-        await this.sendWebhookNotification(alert)
-        break
-      case 'sms':
-        await this.sendSMSNotification(alert)
-        break
-      case 'dashboard':
-        // Dashboard notifications are handled by storing in database
-        break
-      default:
-        logger.warn('Unknown alert channel', { channel })
+    try {
+      // Skip dashboard notifications as they're handled by storing in database
+      if (channel === 'dashboard') {
+        return
+      }
+
+      // Use the notification service for all channels
+      const priority = this.mapSeverityToPriority(alert.severity)
+
+      await notificationService.sendNotification({
+        title: alert.title,
+        message: alert.message,
+        priority,
+        channels: [channel as any], // Type assertion to handle compatibility
+        metadata: alert.metadata,
+        recipient: this.getDefaultRecipient(channel)
+      })
+
+    } catch (error) {
+      logger.error('Failed to send notification via notification service', { error, channel, alert })
     }
   }
 
-  private async sendEmailNotification(alert: Omit<Alert, 'id'>): Promise<void> {
-    // TODO: Implement email notification service
-    logger.info('Email notification would be sent', {
-      severity: alert.severity,
-      title: alert.title,
-      message: alert.message
-    })
-  }
-
-  private async sendSlackNotification(alert: Omit<Alert, 'id'>): Promise<void> {
-    // TODO: Implement Slack notification service
-    logger.info('Slack notification would be sent', {
-      severity: alert.severity,
-      title: alert.title,
-      message: alert.message
-    })
-  }
-
-  private async sendWebhookNotification(alert: Omit<Alert, 'id'>): Promise<void> {
-    // TODO: Implement webhook notification service
-    logger.info('Webhook notification would be sent', {
-      severity: alert.severity,
-      title: alert.title,
-      message: alert.message
-    })
-  }
-
-  private async sendSMSNotification(alert: Omit<Alert, 'id'>): Promise<void> {
-    // TODO: Implement SMS notification service
-    logger.info('SMS notification would be sent', {
-      severity: alert.severity,
-      title: alert.title,
-      message: alert.message
-    })
-  }
 
   /**
    * Collect system metrics for alert evaluation
@@ -453,6 +421,36 @@ export class AlertingSystem {
    */
   getAlertRules(): AlertRule[] {
     return [...this.alertRules]
+  }
+
+  /**
+   * Map alert severity to notification priority
+   */
+  private mapSeverityToPriority(severity: AlertSeverity): 'low' | 'medium' | 'high' | 'critical' {
+    switch (severity) {
+      case 'critical': return 'critical'
+      case 'high': return 'high'
+      case 'medium': return 'medium'
+      case 'low': return 'low'
+      default: return 'medium'
+    }
+  }
+
+  /**
+   * Get default recipient for channel
+   */
+  private getDefaultRecipient(channel: AlertChannel): string | undefined {
+    // Return default recipients based on channel
+    switch (channel) {
+      case 'email':
+        return process.env.ALERT_EMAIL_RECIPIENT || 'admin@example.com'
+      case 'sms':
+        return process.env.ALERT_SMS_RECIPIENT || '+1234567890'
+      case 'whatsapp':
+        return process.env.ALERT_WHATSAPP_RECIPIENT || '+1234567890'
+      default:
+        return undefined
+    }
   }
 }
 

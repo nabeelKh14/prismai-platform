@@ -1,5 +1,6 @@
 'use client';
 
+
 import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
 import TiltedCard from "@/components/TiltedCard"
@@ -22,7 +23,8 @@ export default function FeaturesPage() {
   return (
     <div className="min-h-screen" style={{backgroundColor: '#0B0B0D'}}>
       {/* Navigation */}
-      <nav className="border-b border-cyan-500/20 backdrop-blur supports-[backdrop-filter]:bg-[#0B0B0D]/60 sticky top-0 z-50" style={{backgroundColor: '#0B0B0D'}}>
+      
+      <nav className="border-b border-cyan-500/20 backdrop-blur supports-[backdrop-filter]:bg-[#0B0B0D]/60 sticky top-0 z-50" style={{backgroundColor: '#19171fff'}}>
         <div className="container mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex justify-between items-center h-16">
             <div className="flex items-center space-x-2">
@@ -55,7 +57,7 @@ export default function FeaturesPage() {
           </div>
         </div>
       </nav>
-
+      
       {/* Interactive dot-grid background */}
       <DotGrid
         dotSize={2}
@@ -159,7 +161,7 @@ export default function FeaturesPage() {
                   </p>
                 </div>
               }
-              displayOverlayContent={true}
+              displayOverlayContent={false}
             />
 
             <TiltedCard
@@ -186,29 +188,7 @@ export default function FeaturesPage() {
               displayOverlayContent={true}
             />
 
-            <TiltedCard
-              imageSrc="data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMzAwIiBoZWlnaHQ9IjMwMCIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj48ZGVmcz48bGluZWFyR3JhZGllbnQgaWQ9ImciIHgxPSIwJSIgeTE9IjAlIiB4Mj0iMTAwJSIgeTI9IjEwMCUiPjxzdG9wIHN0b3AtY29sb3I9IiNmZjgwMDAiIHN0b3Atb3BhY2l0eT0iMC4yIiBvZmZzZXQ9IjAlIi8+PHN0b3Agc3RvcC1jb2xvcj0iI2ZmODAwMCIgc3RvcC1vcGFjaXR5PSIwLjEiIG9mZnNldD0iMTAwJSIvPjwvbGluZWFyR3JhZGllbnQ+PC9kZWZzPjxyZWN0IHdpZHRoPSIxMDAlIiBoZWlnaHQ9IjEwMCUiIGZpbGw9InVybCgjZykiLz48L3N2Zz4="
-              altText="Marketing Automation"
-              captionText="Marketing Automation - $7K Value"
-              containerHeight="350px"
-              containerWidth="100%"
-              scaleOnHover={1.05}
-              overlayContent={
-                <div className="p-8 text-center h-full flex flex-col justify-center relative">
-                  <div className="absolute -top-3 -right-3 glass rounded-full px-3 py-1">
-                    <span className="text-xs font-bold text-orange-300">$7K Value</span>
-                  </div>
-                  <div className="flex items-center justify-center w-16 h-16 bg-orange-500/20 rounded-2xl mb-6 mx-auto">
-                    <MessageSquare className="h-8 w-8 text-orange-400" />
-                  </div>
-                  <h3 className="text-xl font-bold mb-4 text-white">Marketing Automation</h3>
-                  <p className="text-gray-300 leading-relaxed">
-                    Email campaigns + social media automation + content generation + nurture sequences + A/B testing with AI optimization
-                  </p>
-                </div>
-              }
-              displayOverlayContent={true}
-            />
+          
 
             <TiltedCard
               imageSrc="data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMzAwIiBoZWlnaHQ9IjMwMCIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj48ZGVmcz48bGluZWFyR3JhZGllbnQgaWQ9ImciIHgxPSIwJSIgeTE9IjAlIiB4Mj0iMTAwJSIgeTI9IjEwMCUiPjxzdG9wIHN0b3AtY29sb3I9IiMwMDgwZmYiIHN0b3Atb3BhY2l0eT0iMC4yIiBvZmZzZXQ9IjAlIi8+PHN0b3Agc3RvcC1jb2xvcj0iIzAwODBmZiIgc3RvcC1vcGFjaXR5PSIwLjEiIG9mZnNldD0iMTAwJSIvPjwvbGluZWFyR3JhZGllbnQ+PC9kZWZzPjxyZWN0IHdpZHRoPSIxMDAlIiBoZWlnaHQ9IjEwMCUiIGZpbGw9InVybCgjZykiLz48L3N2Zz4="
@@ -259,20 +239,6 @@ export default function FeaturesPage() {
             />
           </div>
 
-          <div className="text-center animate-fade-in-up" style={{animationDelay: '2s'}}>
-            <div className="card-premium-strong p-8 max-w-2xl mx-auto mb-8">
-              <div className="text-4xl font-bold text-gradient-cyan mb-2">$66,000</div>
-              <div className="text-lg text-gray-300 mb-4">Complete Suite Value</div>
-              <div className="text-2xl font-bold text-white mb-2">Your Investment: $2,997/month</div>
-              <div className="text-green-400 font-semibold">You Save: $63,003</div>
-            </div>
-            <Button className="btn-premium text-lg px-12 py-4 font-semibold rounded-2xl" asChild>
-              <Link href="/demo">
-                Get Your $66K AI Suite For $2,997/month
-                <ArrowRight className="ml-3 h-5 w-5" />
-              </Link>
-            </Button>
-          </div>
         </div>
       </section>
     </div>

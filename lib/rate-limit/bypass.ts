@@ -82,7 +82,7 @@ export class RateLimitBypassService {
           endpoint: bypassGrant.endpoint,
           reason: bypassGrant.reason,
           granted_at: bypassGrant.grantedAt.toISOString(),
-          expires_at: bypassGrant.expiresAt.toISOString(),
+          expires_at: bypassGrant.expiresAt?.toISOString(),
           granted_by: grantedBy,
           is_active: true
         })
@@ -148,7 +148,7 @@ export class RateLimitBypassService {
       const cacheKey = createCacheKey('bypass', identifier)
       const cached = await cache.get<RateLimitBypass>(cacheKey)
 
-      if (cached && cached.expiresAt > new Date()) {
+      if (cached && cached.expiresAt && new Date() < cached.expiresAt) {
         return cached
       }
 
@@ -302,7 +302,7 @@ export class RateLimitBypassService {
     const identifier = bypass.userId || bypass.apiKey || 'unknown'
     const cacheKey = createCacheKey('bypass', identifier)
 
-    const ttl = Math.max(0, Math.floor((bypass.expiresAt.getTime() - Date.now()) / 1000))
+    const ttl = bypass.expiresAt ? Math.max(0, Math.floor((bypass.expiresAt.getTime() - Date.now()) / 1000)) : 0
     await cache.set(cacheKey, bypass, ttl * 1000)
   }
 

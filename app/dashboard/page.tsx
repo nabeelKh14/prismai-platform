@@ -18,7 +18,7 @@ export default async function DashboardPage() {
   }
 
   // Get user profile
-  const { data: profile } = await supabase.table("profiles").select("*").eq("id", user.id).single()
+  const { data: profile } = await supabase.from("profiles").select("*").eq("id", user.id).single()
 
   const { data: callLogs } = await supabase
     .from("call_logs")

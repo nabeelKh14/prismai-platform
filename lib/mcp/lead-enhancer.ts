@@ -62,7 +62,6 @@ export class MCPLeadEnhancer {
       // Connect to free MCP services
       await Promise.all([
         mcpClient.connect('github-mcp'),
-        mcpClient.connect('wikipedia-mcp'),
         mcpClient.connect('clearbit-mcp'),
         mcpClient.connect('hunter-mcp'),
         mcpClient.connect('stackoverflow-mcp'),
@@ -273,28 +272,15 @@ export class MCPLeadEnhancer {
   }
 
   /**
-   * Knowledge-based enhancement using Wikipedia and StackOverflow
+   * Knowledge-based enhancement using StackOverflow
    */
   private async enhanceWithKnowledge(leadData: EnhancedLeadData): Promise<{ score: number; data: any } | null> {
     try {
       let score = 0
       const knowledgeData: any = {}
 
-      // Company knowledge from Wikipedia
-      if (leadData.company) {
-        const wikiResponse = await mcpClient.request('wikipedia-mcp', {
-          method: 'search_knowledge',
-          params: { query: leadData.company }
-        })
-
-        if (wikiResponse.result) {
-          knowledgeData.companyInfo = wikiResponse.result
-          score += 5 // Bonus for having Wikipedia presence
-        }
-      }
-
       // Technical knowledge from StackOverflow
-      if (leadData.jobTitle?.toLowerCase().includes('developer') || 
+      if (leadData.jobTitle?.toLowerCase().includes('developer') ||
           leadData.jobTitle?.toLowerCase().includes('engineer')) {
         const techResponse = await mcpClient.request('stackoverflow-mcp', {
           method: 'search_questions',
@@ -374,18 +360,11 @@ export class MCPLeadEnhancer {
 
       // Market intelligence
       if (leadData.company) {
-        const [wikiData, redditSentiment] = await Promise.all([
-          mcpClient.request('wikipedia-mcp', {
-            method: 'search_knowledge',
-            params: { query: leadData.company }
-          }),
-          mcpClient.request('reddit-mcp', {
-            method: 'analyze_sentiment',
-            params: { subreddit: 'technology' }
-          })
-        ])
+        const redditSentiment = await mcpClient.request('reddit-mcp', {
+          method: 'analyze_sentiment',
+          params: { subreddit: 'technology' }
+        })
 
-        if (wikiData.result) analysis.marketIntelligence.companyInfo = wikiData.result
         if (redditSentiment.result) analysis.marketIntelligence.sentiment = redditSentiment.result
       }
 

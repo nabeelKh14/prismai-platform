@@ -90,16 +90,16 @@ async function getConversionFunnel(supabase: any, userId: string, dateFilter: an
     const { data: transitions } = await transitionsQuery
 
     // Calculate funnel metrics
-    const funnelMetrics = stages?.map(stage => {
-      const stageTransitions = transitions?.filter(t => t.to_stage_id === stage.id) || []
-      const uniqueLeads = new Set(stageTransitions.map(t => t.lead_id)).size
+    const funnelMetrics = stages?.map((stage: any) => {
+      const stageTransitions = transitions?.filter((t: any) => t.to_stage_id === stage.id) || []
+      const uniqueLeads = new Set(stageTransitions.map((t: any) => t.lead_id)).size
 
-      const previousStage = stages?.find(s => s.stage_order === stage.stage_order - 1)
+      const previousStage = stages?.find((s: any) => s.stage_order === stage.stage_order - 1)
       let conversionRate = 0
 
       if (previousStage) {
-        const previousTransitions = transitions?.filter(t => t.to_stage_id === previousStage.id) || []
-        const previousUniqueLeads = new Set(previousTransitions.map(t => t.lead_id)).size
+        const previousTransitions = transitions?.filter((t: any) => t.to_stage_id === previousStage.id) || []
+        const previousUniqueLeads = new Set(previousTransitions.map((t: any) => t.lead_id)).size
         conversionRate = previousUniqueLeads > 0 ? (uniqueLeads / previousUniqueLeads) * 100 : 0
       }
 
@@ -114,8 +114,8 @@ async function getConversionFunnel(supabase: any, userId: string, dateFilter: an
     }) || []
 
     // Calculate overall conversion rate
-    const firstStage = funnelMetrics.find(m => m.order === 1)
-    const lastStage = funnelMetrics.find(m => m.order === Math.max(...funnelMetrics.map(m => m.order)))
+    const firstStage = funnelMetrics.find((m: any) => m.order === 1)
+    const lastStage = funnelMetrics.find((m: any) => m.order === Math.max(...funnelMetrics.map((m: any) => m.order)))
 
     const overallConversionRate = firstStage && lastStage && firstStage.leads > 0
       ? (lastStage.leads / firstStage.leads) * 100
@@ -156,7 +156,7 @@ async function getAttributionAnalytics(supabase: any, userId: string, dateFilter
     // Group by source and calculate attribution
     const sourceAttribution = new Map()
 
-    touchpoints?.forEach(tp => {
+    touchpoints?.forEach((tp: any) => {
       const sourceId = tp.source_id || 'direct'
       const sourceName = tp.lead_sources?.name || 'Direct'
 
@@ -181,15 +181,15 @@ async function getAttributionAnalytics(supabase: any, userId: string, dateFilter
     })
 
     // Calculate conversion rates and ROI
-    const attributionResults = Array.from(sourceAttribution.values()).map(source => ({
+    const attributionResults = Array.from(sourceAttribution.values()).map((source: any) => ({
       ...source,
       conversionRate: source.touchpoints > 0 ? (source.conversions / source.touchpoints) * 100 : 0,
       attributionPercentage: 0 // Would calculate based on total attribution weights
     }))
 
     // Calculate attribution percentages
-    const totalWeight = attributionResults.reduce((sum, source) => sum + source.attributionWeight, 0)
-    attributionResults.forEach(source => {
+    const totalWeight = attributionResults.reduce((sum: number, source: any) => sum + source.attributionWeight, 0)
+    attributionResults.forEach((source: any) => {
       source.attributionPercentage = totalWeight > 0 ? (source.attributionWeight / totalWeight) * 100 : 0
     })
 
@@ -227,7 +227,7 @@ async function getEngagementAnalytics(supabase: any, userId: string, dateFilter:
     const channelStats = new Map()
     const typeStats = new Map()
 
-    engagements?.forEach(eng => {
+    engagements?.forEach((eng: any) => {
       // Channel stats
       if (!channelStats.has(eng.channel)) {
         channelStats.set(eng.channel, { channel: eng.channel, count: 0, uniqueLeads: new Set() })
@@ -244,14 +244,14 @@ async function getEngagementAnalytics(supabase: any, userId: string, dateFilter:
     })
 
     return {
-      channels: Array.from(channelStats.values()).map(c => ({
+      channels: Array.from(channelStats.values()).map((c: any) => ({
         ...c,
         uniqueLeads: c.uniqueLeads.size
       })),
       types: Array.from(typeStats.values()),
       totalEngagements: engagements?.length || 0,
       avgEngagementScore: engagements?.length > 0
-        ? engagements.reduce((sum, eng) => sum + (eng.engagement_score || 0), 0) / engagements.length
+        ? engagements.reduce((sum: number, eng: any) => sum + (eng.engagement_score || 0), 0) / engagements.length
         : 0
     }
   } catch (error) {
@@ -287,27 +287,27 @@ async function getLeadPerformanceMetrics(supabase: any, userId: string, dateFilt
     }
 
     const totalLeads = leads.length
-    const avgScore = leads.reduce((sum, lead) => sum + (lead.lead_score || 0), 0) / totalLeads
-    const convertedLeads = leads.filter(lead => lead.status === 'customer').length
+    const avgScore = leads.reduce((sum: number, lead: any) => sum + (lead.lead_score || 0), 0) / totalLeads
+    const convertedLeads = leads.filter((lead: any) => lead.status === 'customer').length
     const conversionRate = (convertedLeads / totalLeads) * 100
 
     // Top sources
     const sourceCounts = new Map()
-    leads.forEach(lead => {
+    leads.forEach((lead: any) => {
       const source = lead.source_id || 'direct'
       sourceCounts.set(source, (sourceCounts.get(source) || 0) + 1)
     })
 
     const topSources = Array.from(sourceCounts.entries())
-      .sort((a, b) => b[1] - a[1])
+      .sort((a: any, b: any) => b[1] - a[1])
       .slice(0, 5)
       .map(([source, count]) => ({ source, count, percentage: (count / totalLeads) * 100 }))
 
     // Score distribution
     const scoreDistribution = {
-      high: leads.filter(l => (l.lead_score || 0) >= 80).length,
-      medium: leads.filter(l => (l.lead_score || 0) >= 60 && (l.lead_score || 0) < 80).length,
-      low: leads.filter(l => (l.lead_score || 0) < 60).length
+      high: leads.filter((l: any) => (l.lead_score || 0) >= 80).length,
+      medium: leads.filter((l: any) => (l.lead_score || 0) >= 60 && (l.lead_score || 0) < 80).length,
+      low: leads.filter((l: any) => (l.lead_score || 0) < 60).length
     }
 
     return {

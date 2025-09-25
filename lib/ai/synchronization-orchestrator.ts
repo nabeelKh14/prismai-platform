@@ -33,7 +33,7 @@ export class SynchronizationOrchestrator {
   registerWebSocket(conversationId: string, ws: WebSocket) {
     this.webSocketConnections.set(conversationId, ws)
 
-    ws.on('close', () => {
+    ws.addEventListener('close', () => {
       this.webSocketConnections.delete(conversationId)
     })
   }

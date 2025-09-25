@@ -22,14 +22,41 @@ const customJestConfig = {
   ],
   coverageThreshold: {
     global: {
-      branches: 70,
-      functions: 70,
-      lines: 70,
-      statements: 70,
+      branches: 80,
+      functions: 80,
+      lines: 80,
+      statements: 80,
     },
   },
+  // Performance testing configuration
+  maxWorkers: '50%',
+  cache: true,
+  // Integration test configuration
+  testTimeout: 30000,
+  // Coverage exclusions for generated files and third-party code
+  coveragePathIgnorePatterns: [
+    '/node_modules/',
+    '/.next/',
+    '/coverage/',
+    '/dist/',
+    '/build/',
+    '\\.d\\.ts$',
+    '\\.config\\.(js|ts)$',
+    '\\.setup\\.(js|ts)$',
+    'scripts/',
+    'public/',
+    'styles/',
+  ],
+  // Performance and memory monitoring
+  collectCoverage: false, // Set to true for coverage runs
+  forceExit: true,
+  detectOpenHandles: true,
+  // Enhanced module mapping for better mocking
   moduleNameMapper: {
     '^@/(.*)$': '<rootDir>/$1',
+    '^@/components/(.*)$': '<rootDir>/components/$1',
+    '^@/lib/(.*)$': '<rootDir>/lib/$1',
+    '^@/app/(.*)$': '<rootDir>/app/$1',
   },
   testMatch: [
     '**/__tests__/**/*.{js,jsx,ts,tsx}',

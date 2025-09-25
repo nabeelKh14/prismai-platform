@@ -485,7 +485,7 @@ export class WorkflowEngine {
         .lte('next_execution_at', new Date().toISOString())
 
       for (const execution of dueExecutions || []) {
-        await this.executeNextStep(execution.id, execution.lead_workflows.user_id)
+        await this.executeNextStep(execution.id, (execution.lead_workflows as any)?.[0]?.user_id)
       }
 
     } catch (error) {

@@ -117,7 +117,7 @@ export default async function BookingsPage() {
               </h3>
 
               <div className="space-y-3">
-                {dayBookings.map((booking) => (
+                {(dayBookings as any[]).map((booking: any) => (
                   <Card key={booking.id}>
                     <CardContent className="pt-6">
                       <div className="flex items-center justify-between">

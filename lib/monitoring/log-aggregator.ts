@@ -311,7 +311,7 @@ export class LogAggregator {
       return {
         total_logs: 0,
         logs_by_level: { debug: 0, info: 0, warn: 0, error: 0, fatal: 0 },
-        logs_by_source: { api: 0, database: 0, auth: 0, external: 0, system: 0, application: 0, audit: 0 },
+        logs_by_source: { api: 0, database: 0, auth: 0, external: 0, system: 0, application: 0 },
         error_rate: 0,
         top_errors: [],
         logs_over_time: []

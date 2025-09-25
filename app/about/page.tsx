@@ -1,17 +1,10 @@
 'use client';
 
-import { Metadata } from 'next'
 import Link from 'next/link'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
-import { Badge } from '@/components/ui/badge'
 import { Building, Users, Target, Award, TrendingUp, Globe, Heart, Zap, Star, CheckCircle, Shield } from 'lucide-react'
 import DotGrid from '@/components/DotGrid'
-
-export const metadata: Metadata = {
-  title: 'About PrismAI - Our Mission & Vision',
-  description: 'Learn about PrismAI\'s mission to revolutionize business automation through AI-powered solutions.',
-}
 
 export default function AboutPage() {
   return (

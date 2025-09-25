@@ -80,7 +80,7 @@ export class ABTestEngine {
 
       if (existingAssignment) {
         // Return existing variant
-        const variant = test.variants.find(v => v.id === existingAssignment.variant_id)
+        const variant = test.variants.find((v: ABTestVariant) => v.id === existingAssignment.variant_id)
         return variant || null
       }
 
@@ -114,13 +114,22 @@ export class ABTestEngine {
       const supabase = await createClient()
 
       // Increment conversion count
-      await supabase
+      const { data: currentResult } = await supabase
         .from('ab_test_results')
-        .update({
-          conversions: supabase.raw('conversions + 1')
-        })
+        .select('conversions')
         .eq('test_id', testId)
         .eq('lead_id', leadId)
+        .single()
+
+      if (currentResult) {
+        await supabase
+          .from('ab_test_results')
+          .update({
+            conversions: (currentResult.conversions || 0) + 1
+          })
+          .eq('test_id', testId)
+          .eq('lead_id', leadId)
+      }
 
     } catch (error) {
       logger.error('Error recording conversion:', error)
@@ -135,13 +144,22 @@ export class ABTestEngine {
       const supabase = await createClient()
 
       // Increment impression count
-      await supabase
+      const { data: currentResult } = await supabase
         .from('ab_test_results')
-        .update({
-          impressions: supabase.raw('impressions + 1')
-        })
+        .select('impressions')
         .eq('test_id', testId)
         .eq('lead_id', leadId)
+        .single()
+
+      if (currentResult) {
+        await supabase
+          .from('ab_test_results')
+          .update({
+            impressions: (currentResult.impressions || 0) + 1
+          })
+          .eq('test_id', testId)
+          .eq('lead_id', leadId)
+      }
 
     } catch (error) {
       logger.error('Error recording impression:', error)

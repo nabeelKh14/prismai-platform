@@ -1,36 +1,5 @@
 {
   "mcpServers": {
-    "sequentialthinking": {
-      "command": "docker",
-      "args": [
-        "run",
-        "--rm",
-        "-i",
-        "mcp/sequentialthinking"
-      ]
-    },
-    "github": {
-      "command": "docker",
-      "args": [
-        "run",
-        "-i",
-        "--rm",
-        "-e",
-        "GITHUB_PERSONAL_ACCESS_TOKEN",
-        "-e",
-        "GITHUB_TOOLSETS",
-        "-e",
-        "GITHUB_READ_ONLY",
-        "ghcr.io/github/github-mcp-server"
-      ],
-      "env": {
-        "GITHUB_PERSONAL_ACCESS_TOKEN": "",
-        "GITHUB_TOOLSETS": "",
-        "GITHUB_READ_ONLY": ""
-      },
-      "disabled": false,
-      "alwaysAllow": []
-    },
     "context7": {
       "command": "npx",
       "args": [
@@ -41,17 +10,20 @@
         "DEFAULT_MINIMUM_TOKENS": ""
       },
       "alwaysAllow": [
-        "get-library-docs"
+        "get-library-docs",
+        "resolve-library-id"
       ]
     },
-    "brave-search": {
+    "github": {
       "command": "npx",
       "args": [
         "-y",
-        "@modelcontextprotocol/server-brave-search"
+        "@modelcontextprotocol/server-github"
       ],
       "env": {
-        "BRAVE_API_KEY": "jina_8de98519b5aa4ab7843ae682d7218363lpP8T2uEazLMOI3Fip-myurFOhmI"
+        "GITHUB_PERSONAL_ACCESS_TOKEN": "${GITHUB_TOKEN}",
+        "GITHUB_TOOLSETS": "code_review,search_replace",
+        "GITHUB_READ_ONLY": "false"
       }
     }
   }

@@ -1,5 +1,13 @@
 import { createClient } from "@/lib/supabase/server"
 import { NextRequest, NextResponse } from "next/server"
+import { z } from "zod"
+
+// Input validation schema
+const conversationActionSchema = z.object({
+  type: z.enum(['assign_conversation', 'transfer_conversation', 'resolve_conversation']),
+  conversation_id: z.string().uuid(),
+  agent_id: z.string().uuid().optional(),
+})
 
 export async function GET(request: NextRequest) {
   try {
@@ -75,7 +83,7 @@ export async function POST(request: NextRequest) {
     }
 
     const body = await request.json()
-    const { type, conversation_id, agent_id } = body
+    const { type, conversation_id, agent_id } = conversationActionSchema.parse(body)
 
     if (type === 'assign_conversation') {
       // Update conversation assignment

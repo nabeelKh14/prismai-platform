@@ -64,8 +64,52 @@ export async function POST(request: NextRequest) {
     const { action, leadId, leadData } = body
 
     if (action === 'score_lead' && leadData) {
-      // Real-time lead scoring
-      const scoring = await EnhancedLeadScoringEngine.calculateLeadScore(leadData)
+      // Try to use ML service for prediction first
+      let scoring: any = null
+      let mlPrediction = null
+
+      try {
+        // Use ML service for prediction
+        const mlServiceUrl = process.env.ML_SERVICE_URL || 'http://localhost:8001'
+        const response = await fetch(`${mlServiceUrl}/predict`, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({
+            model_type: 'lead_conversion',
+            user_id: user.id,
+            data: leadData
+          })
+        })
+
+        if (response.ok) {
+          mlPrediction = await response.json()
+          if (mlPrediction.success) {
+            scoring = {
+              score: Math.round(mlPrediction.conversion_probability * 100),
+              probability: mlPrediction.conversion_probability,
+              confidence: mlPrediction.confidence,
+              breakdown: mlPrediction.feature_importance,
+              ml_prediction: true
+            }
+          }
+        }
+      } catch (error) {
+        logger.warn('ML service prediction failed, falling back to rule-based scoring')
+      }
+
+      // Fallback to rule-based scoring if ML service fails
+      if (!scoring) {
+        const ruleBasedScoring = await EnhancedLeadScoringEngine.calculateLeadScore(leadData)
+        scoring = {
+          score: ruleBasedScoring.score,
+          probability: 0,
+          confidence: 0,
+          breakdown: ruleBasedScoring.breakdown,
+          ml_prediction: false
+        }
+      }
 
       // Update lead score if leadId provided
       if (leadId) {
@@ -74,6 +118,7 @@ export async function POST(request: NextRequest) {
           .update({
             lead_score: scoring.score,
             predictive_score: scoring.score,
+            conversion_probability: scoring.probability || 0,
             last_engagement_at: new Date().toISOString()
           })
           .eq('user_id', user.id)
@@ -85,8 +130,13 @@ export async function POST(request: NextRequest) {
           .insert({
             lead_id: leadId,
             type: 'score_updated',
-            description: 'Lead score recalculated',
-            metadata: { newScore: scoring.score, breakdown: scoring.breakdown }
+            description: scoring.ml_prediction ? 'Lead score calculated with ML' : 'Lead score recalculated',
+            metadata: {
+              newScore: scoring.score,
+              breakdown: scoring.breakdown,
+              ml_prediction: scoring.ml_prediction || false,
+              confidence: scoring.confidence || 0
+            }
           })
       }
 
@@ -111,12 +161,12 @@ export async function POST(request: NextRequest) {
         .not('lead_score', 'is', null)
         .limit(1000)
 
-      // Train model (simplified - would use actual ML in production)
-      const trainingResults = await trainPredictiveModel(historicalData || [], {
+      // Train model using new ML service
+      const trainingResults = await trainPredictiveModelWithMLService(historicalData || [], {
         modelType,
         algorithm,
         features: features || []
-      })
+      }, user.id)
 
       const { data: model, error } = await supabase
         .from('predictive_models')
@@ -156,7 +206,7 @@ export async function POST(request: NextRequest) {
   }
 }
 
-async function trainPredictiveModel(historicalData: any[], config: any) {
+async function trainPredictiveModel(historicalData: any[], config: any, userId: string) {
   try {
     // Simplified model training - in production, this would use actual ML libraries
     const totalLeads = historicalData.length
@@ -196,5 +246,56 @@ async function trainPredictiveModel(historicalData: any[], config: any) {
       metrics: { accuracy: 0.7, precision: 0.65, recall: 0.6, f1_score: 0.62, auc_roc: 0.75 },
       summary: { error: 'Training failed' }
     }
+  }
+}
+
+async function trainPredictiveModelWithMLService(historicalData: any[], config: any, userId: string) {
+  try {
+    // Use the new ML service for training
+    const mlServiceUrl = process.env.ML_SERVICE_URL || 'http://localhost:8001'
+
+    const response = await fetch(`${mlServiceUrl}/train`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({
+        model_type: config.modelType || 'lead_conversion',
+        algorithm: config.algorithm || 'random_forest',
+        model_name: `lead_scoring_model_${Date.now()}`,
+        user_id: userId,
+        training_config: {
+          features: config.features || ['lead_score', 'engagement_score', 'company_size', 'job_title'],
+          preprocessing: {
+            missing_value_strategy: 'mean',
+            categorical_encoding: 'one_hot',
+            scaling_method: 'standard'
+          }
+        }
+      })
+    })
+
+    if (!response.ok) {
+      logger.error('ML service training failed:', await response.text())
+      // Fallback to old method
+      return await trainPredictiveModel(historicalData, config, userId)
+    }
+
+    const result = await response.json()
+    return {
+      metrics: result.metrics || {},
+      summary: {
+        totalLeads: historicalData.length,
+        convertedLeads: historicalData.filter(lead => lead.status === 'customer').length,
+        conversionRate: historicalData.length > 0 ? historicalData.filter(lead => lead.status === 'customer').length / historicalData.length : 0,
+        featureImportance: result.metadata?.feature_importance || {},
+        trainingDate: new Date().toISOString(),
+        ml_service_used: true
+      }
+    }
+  } catch (error) {
+    logger.error('ML service training error:', error)
+    // Fallback to old method
+    return await trainPredictiveModel(historicalData, config, userId)
   }
 }

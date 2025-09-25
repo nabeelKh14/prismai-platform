@@ -25,8 +25,8 @@ export class LanguageClient {
     try {
       const [detections] = await this.translate.detect(text)
 
-      if (detections && detections.length > 0) {
-        const detection = detections[0]
+      if (detections) {
+        const detection = Array.isArray(detections) ? detections[0] : detections
         return {
           language: detection.language,
           confidence: detection.confidence || 0

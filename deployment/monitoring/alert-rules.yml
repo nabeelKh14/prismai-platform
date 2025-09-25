@@ -1,0 +1,219 @@
+# ==============================================================================
+# PROMETHEUS ALERT RULES
+# PrismAI Production Alerting Rules
+# ==============================================================================
+
+groups:
+  - name: prismai-alerts
+    rules:
+      # Application availability alerts
+      - alert: ApplicationDown
+        expr: up{job="prismai-app"} == 0
+        for: 5m
+        labels:
+          severity: critical
+          service: prismai
+          category: availability
+        annotations:
+          summary: "PrismAI application is down"
+          description: "PrismAI application has been down for more than 5 minutes"
+          runbook_url: "https://docs.prismai.com/runbooks/application-down"
+
+      - alert: HighErrorRate
+        expr: rate(http_requests_total{status!~"2.."}[5m]) / rate(http_requests_total[5m]) > 0.05
+        for: 10m
+        labels:
+          severity: warning
+          service: prismai
+          category: reliability
+        annotations:
+          summary: "High error rate detected"
+          description: "Error rate is above 5% for more than 10 minutes"
+          runbook_url: "https://docs.prismai.com/runbooks/high-error-rate"
+
+      # Performance alerts
+      - alert: HighResponseTime
+        expr: histogram_quantile(0.95, rate(http_request_duration_seconds_bucket[5m])) > 2
+        for: 5m
+        labels:
+          severity: warning
+          service: prismai
+          category: performance
+        annotations:
+          summary: "High response time detected"
+          description: "95th percentile response time is above 2 seconds"
+          runbook_url: "https://docs.prismai.com/runbooks/high-response-time"
+
+      - alert: VeryHighResponseTime
+        expr: histogram_quantile(0.95, rate(http_request_duration_seconds_bucket[5m])) > 5
+        for: 2m
+        labels:
+          severity: critical
+          service: prismai
+          category: performance
+        annotations:
+          summary: "Very high response time detected"
+          description: "95th percentile response time is above 5 seconds"
+          runbook_url: "https://docs.prismai.com/runbooks/very-high-response-time"
+
+      # Resource utilization alerts
+      - alert: HighMemoryUsage
+        expr: (node_memory_MemAvailable_bytes / node_memory_MemTotal_bytes) < 0.2
+        for: 5m
+        labels:
+          severity: warning
+          service: infrastructure
+          category: resources
+        annotations:
+          summary: "High memory usage detected"
+          description: "Available memory is below 20%"
+          runbook_url: "https://docs.prismai.com/runbooks/high-memory-usage"
+
+      - alert: HighCPUUsage
+        expr: (1 - avg by (instance)(rate(node_cpu_seconds_total{mode="idle"}[5m]))) > 0.8
+        for: 10m
+        labels:
+          severity: warning
+          service: infrastructure
+          category: resources
+        annotations:
+          summary: "High CPU usage detected"
+          description: "CPU usage is above 80% for more than 10 minutes"
+          runbook_url: "https://docs.prismai.com/runbooks/high-cpu-usage"
+
+      - alert: LowDiskSpace
+        expr: (node_filesystem_avail_bytes{mountpoint="/"} / node_filesystem_size_bytes{mountpoint="/"}) < 0.1
+        for: 5m
+        labels:
+          severity: critical
+          service: infrastructure
+          category: resources
+        annotations:
+          summary: "Low disk space detected"
+          description: "Available disk space is below 10%"
+          runbook_url: "https://docs.prismai.com/runbooks/low-disk-space"
+
+      # Database alerts
+      - alert: DatabaseConnectionErrors
+        expr: rate(database_connection_errors_total[5m]) > 0
+        for: 2m
+        labels:
+          severity: critical
+          service: database
+          category: reliability
+        annotations:
+          summary: "Database connection errors detected"
+          description: "Database connection errors are occurring"
+          runbook_url: "https://docs.prismai.com/runbooks/database-connection-errors"
+
+      - alert: SlowDatabaseQueries
+        expr: histogram_quantile(0.95, rate(database_query_duration_seconds_bucket[5m])) > 1
+        for: 5m
+        labels:
+          severity: warning
+          service: database
+          category: performance
+        annotations:
+          summary: "Slow database queries detected"
+          description: "95th percentile query time is above 1 second"
+          runbook_url: "https://docs.prismai.com/runbooks/slow-database-queries"
+
+      # Security alerts
+      - alert: HighFailedAuthAttempts
+        expr: rate(authentication_failures_total[5m]) > 10
+        for: 2m
+        labels:
+          severity: warning
+          service: security
+          category: security
+        annotations:
+          summary: "High number of failed authentication attempts"
+          description: "More than 10 failed authentication attempts per minute"
+          runbook_url: "https://docs.prismai.com/runbooks/high-failed-auth-attempts"
+
+      - alert: SuspiciousActivity
+        expr: rate(suspicious_requests_total[5m]) > 5
+        for: 1m
+        labels:
+          severity: critical
+          service: security
+          category: security
+        annotations:
+          summary: "Suspicious activity detected"
+          description: "Suspicious request patterns detected"
+          runbook_url: "https://docs.prismai.com/runbooks/suspicious-activity"
+
+      # Business metrics alerts
+      - alert: LowConversionRate
+        expr: rate(conversions_total[1h]) / rate(visits_total[1h]) < 0.02
+        for: 1h
+        labels:
+          severity: warning
+          service: business
+          category: business
+        annotations:
+          summary: "Low conversion rate detected"
+          description: "Conversion rate is below 2% for the past hour"
+          runbook_url: "https://docs.prismai.com/runbooks/low-conversion-rate"
+
+      - alert: HighAbandonmentRate
+        expr: rate(abandoned_sessions_total[1h]) / rate(active_sessions_total[1h]) > 0.7
+        for: 30m
+        labels:
+          severity: warning
+          service: business
+          category: business
+        annotations:
+          summary: "High session abandonment rate"
+          description: "Session abandonment rate is above 70%"
+          runbook_url: "https://docs.prismai.com/runbooks/high-abandonment-rate"
+
+      # AI/ML specific alerts
+      - alert: AIModelDegraded
+        expr: ai_model_confidence < 0.8
+        for: 15m
+        labels:
+          severity: warning
+          service: ai
+          category: ai-ml
+        annotations:
+          summary: "AI model confidence degraded"
+          description: "AI model confidence is below 80%"
+          runbook_url: "https://docs.prismai.com/runbooks/ai-model-degraded"
+
+      - alert: HighAILatency
+        expr: histogram_quantile(0.95, rate(ai_processing_duration_seconds_bucket[5m])) > 3
+        for: 5m
+        labels:
+          severity: warning
+          service: ai
+          category: ai-ml
+        annotations:
+          summary: "High AI processing latency"
+          description: "95th percentile AI processing time is above 3 seconds"
+          runbook_url: "https://docs.prismai.com/runbooks/high-ai-latency"
+
+      # Load balancer alerts
+      - alert: UnhealthyBackendServers
+        expr: load_balancer_healthy_servers < 2
+        for: 2m
+        labels:
+          severity: critical
+          service: load-balancer
+          category: infrastructure
+        annotations:
+          summary: "Unhealthy backend servers detected"
+          description: "Less than 2 healthy backend servers available"
+          runbook_url: "https://docs.prismai.com/runbooks/unhealthy-backend-servers"
+
+      - alert: HighLoadBalancerLatency
+        expr: histogram_quantile(0.95, rate(load_balancer_request_duration_seconds_bucket[5m])) > 1
+        for: 5m
+        labels:
+          severity: warning
+          service: load-balancer
+          category: infrastructure
+        annotations:
+          summary: "High load balancer latency"
+          description: "95th percentile load balancer response time is above 1 second"
+          runbook_url: "https://docs.prismai.com/runbooks/high-load-balancer-latency"

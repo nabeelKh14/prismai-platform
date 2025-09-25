@@ -1,16 +1,10 @@
 import { type NextRequest, NextResponse } from "next/server"
 import { createClient } from "@/lib/supabase/server"
 import { z } from "zod"
-import { withErrorHandling, ValidationError, AuthenticationError } from "@/lib/errors"
+import { withErrorHandling, AuthenticationError } from "@/lib/errors"
 import { geminiClient } from "@/lib/ai/gemini-client"
 
 // Validation schemas
-const suiteActionSchema = z.object({
-  action: z.enum(['analyze_business', 'optimize_services', 'generate_report', 'predict_trends']),
-  timeframe: z.enum(['7d', '30d', '90d', '1y']).optional(),
-  services: z.array(z.string()).optional(),
-  parameters: z.record(z.any()).optional(),
-})
 
 const integrationRequestSchema = z.object({
   triggerService: z.enum(['receptionist', 'leads', 'chatbot', 'marketing', 'analytics']),
@@ -129,13 +123,13 @@ class AISuiteOrchestrator {
     const { data: activities } = await supabase
       .from('lead_activities')
       .select('*')
-      .in('lead_id', leads?.map(l => l.id) || [])
+      .in('lead_id', leads?.map((l: any) => l.id) || [])
 
     return {
       total: leads?.length || 0,
-      qualified: leads?.filter(l => l.status === 'qualified').length || 0,
-      converted: leads?.filter(l => l.status === 'customer').length || 0,
-      averageScore: leads?.reduce((sum, l) => sum + (l.lead_score || 0), 0) / (leads?.length || 1),
+      qualified: leads?.filter((l: any) => l.status === 'qualified').length || 0,
+      converted: leads?.filter((l: any) => l.status === 'customer').length || 0,
+      averageScore: leads?.reduce((sum: number, l: any) => sum + (l.lead_score || 0), 0) / (leads?.length || 1),
       activities: activities?.length || 0,
       sources: this.groupBy(leads || [], 'source_id'),
       conversionFunnel: this.calculateConversionFunnel(leads || [])
@@ -152,10 +146,10 @@ class AISuiteOrchestrator {
 
     return {
       total: calls?.length || 0,
-      answered: calls?.filter(c => c.call_status === 'answered').length || 0,
-      avgDuration: calls?.reduce((sum, c) => sum + (c.call_duration || 0), 0) / (calls?.length || 1),
-      avgSentiment: calls?.reduce((sum, c) => sum + (c.sentiment_score || 0), 0) / (calls?.length || 1),
-      bookingsCreated: calls?.filter(c => c.booking_created).length || 0
+      answered: calls?.filter((c: any) => c.call_status === 'answered').length || 0,
+      avgDuration: calls?.reduce((sum: number, c: any) => sum + (c.call_duration || 0), 0) / (calls?.length || 1),
+      avgSentiment: calls?.reduce((sum: number, c: any) => sum + (c.sentiment_score || 0), 0) / (calls?.length || 1),
+      bookingsCreated: calls?.filter((c: any) => c.booking_created).length || 0
     }
   }
 
@@ -169,10 +163,10 @@ class AISuiteOrchestrator {
 
     return {
       total: conversations?.length || 0,
-      resolved: conversations?.filter(c => c.status === 'resolved').length || 0,
-      avgSatisfaction: conversations?.reduce((sum, c) => sum + (c.satisfaction_rating || 0), 0) / (conversations?.length || 1),
-      totalMessages: conversations?.reduce((sum, c) => sum + (c.chat_messages?.length || 0), 0) || 0,
-      escalations: conversations?.filter(c => c.status === 'escalated').length || 0
+      resolved: conversations?.filter((c: any) => c.status === 'resolved').length || 0,
+      avgSatisfaction: conversations?.reduce((sum: number, c: any) => sum + (c.satisfaction_rating || 0), 0) / (conversations?.length || 1),
+      totalMessages: conversations?.reduce((sum: number, c: any) => sum + (c.chat_messages?.length || 0), 0) || 0,
+      escalations: conversations?.filter((c: any) => c.status === 'escalated').length || 0
     }
   }
 
@@ -184,7 +178,7 @@ class AISuiteOrchestrator {
       .gte('created_at', startDate)
       .lte('created_at', endDate)
 
-    const totalStats = campaigns?.reduce((acc, c) => {
+    const totalStats = campaigns?.reduce((acc: any, c: any) => {
       const stats = c.statistics || {}
       acc.sent += stats.sent || 0
       acc.opened += stats.opened || 0
@@ -194,7 +188,7 @@ class AISuiteOrchestrator {
 
     return {
       total: campaigns?.length || 0,
-      sent: campaigns?.filter(c => c.status === 'sent').length || 0,
+      sent: campaigns?.filter((c: any) => c.status === 'sent').length || 0,
       totalEmailsSent: totalStats.sent,
       openRate: totalStats.sent > 0 ? (totalStats.opened / totalStats.sent) * 100 : 0,
       clickRate: totalStats.opened > 0 ? (totalStats.clicked / totalStats.opened) * 100 : 0
@@ -218,7 +212,7 @@ class AISuiteOrchestrator {
 
     return {
       totalEvents: events?.length || 0,
-      uniqueUsers: new Set(events?.map(e => e.session_id) || []).size,
+      uniqueUsers: new Set(events?.map((e: any) => e.session_id) || []).size,
       metricsTracked: metrics?.length || 0,
       topEvents: this.groupBy(events || [], 'event_name')
     }
@@ -366,47 +360,47 @@ Focus on:
   }
 
   // Placeholder methods (would be fully implemented)
-  static calculateServiceSynergy(leadData: any, callData: any, chatData: any, emailData: any): number {
+  static calculateServiceSynergy(_leadData: any, _callData: any, _chatData: any, _emailData: any): number {
     return 85 // Placeholder
   }
 
-  static calculateAutomationLevel(leadData: any, callData: any, chatData: any, emailData: any): number {
+  static calculateAutomationLevel(_leadData: any, _callData: any, _chatData: any, _emailData: any): number {
     return 87 // Placeholder
   }
 
-  static calculateConversionFunnel(leads: any[]): any {
+  static calculateConversionFunnel(_leads: any[]): any {
     return {} // Placeholder
   }
 
-  static generateCrossServiceRecommendations(leadData: any, callData: any, chatData: any, emailData: any): string[] {
+  static generateCrossServiceRecommendations(_leadData: any, _callData: any, _chatData: any, _emailData: any): string[] {
     return ['Integrate chatbot with lead scoring', 'Automate email follow-ups for qualified leads']
   }
 
-  static async generateOptimizationPlan(analysis: any): Promise<any> {
+  static async generateOptimizationPlan(_analysis: any): Promise<any> {
     return {} // Placeholder
   }
 
-  static async executeOptimizations(supabase: any, userId: string, plan: any): Promise<any> {
+  static async executeOptimizations(_supabase: any, _userId: string, _plan: any): Promise<any> {
     return {} // Placeholder
   }
 
-  static calculateExpectedImprovements(plan: any): any {
+  static calculateExpectedImprovements(_plan: any): any {
     return {} // Placeholder
   }
 
-  static generateOptimizationTimeline(plan: any): any {
+  static generateOptimizationTimeline(_plan: any): any {
     return {} // Placeholder
   }
 
-  static async processCallIntegration(supabase: any, userId: string, targetServices: string[], eventData: any): Promise<any[]> {
+  static async processCallIntegration(_supabase: any, _userId: string, _targetServices: string[], _eventData: any): Promise<any[]> {
     return [] // Placeholder
   }
 
-  static async processMarketingIntegration(supabase: any, userId: string, targetServices: string[], eventData: any): Promise<any[]> {
+  static async processMarketingIntegration(_supabase: any, _userId: string, _targetServices: string[], _eventData: any): Promise<any[]> {
     return [] // Placeholder
   }
 
-  static async processAnalyticsIntegration(supabase: any, userId: string, targetServices: string[], eventData: any): Promise<any[]> {
+  static async processAnalyticsIntegration(_supabase: any, _userId: string, _targetServices: string[], _eventData: any): Promise<any[]> {
     return [] // Placeholder
   }
 }
@@ -439,8 +433,8 @@ export const POST = withErrorHandling(async (request: NextRequest) => {
   }
 })
 
-async function handleBusinessAnalysis(supabase: any, user: any, body: any) {
-  const { timeframe = '30d' } = body
+async function handleBusinessAnalysis(supabase: any, user: any, _body: any) {
+  const timeframe = '30d'
 
   const analysis = await AISuiteOrchestrator.analyzeBusinessPerformance(
     supabase, 
@@ -488,7 +482,7 @@ async function handleServiceIntegration(supabase: any, user: any, body: any) {
 }
 
 // Get suite metrics and status
-export const GET = withErrorHandling(async (request: NextRequest) => {
+export const GET = withErrorHandling(async (_request: NextRequest) => {
   const supabase = await createClient()
   const {
     data: { user },

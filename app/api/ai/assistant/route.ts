@@ -1,8 +1,9 @@
 import { type NextRequest, NextResponse } from "next/server"
 import { createClient } from "@/lib/supabase/server"
 import { z } from "zod"
-import { withErrorHandling, ValidationError, AuthenticationError, ExternalServiceError } from "@/lib/errors"
+import { withErrorHandling, AuthenticationError } from "@/lib/errors"
 import { requireEnv } from "@/lib/env"
+import { VAPIClient } from "@/lib/ai/vapi-client"
 
 // Validation schemas
 const createAssistantSchema = z.object({
@@ -60,42 +61,22 @@ BOOKING_REQUEST: {
 }
     `.trim()
 
-    // Create ElevenLabs agent
-    const elevenLabsResponse = await fetch("https://api.elevenlabs.io/v1/convai/agents/create", {
-      method: "POST",
-      headers: {
-        "xi-api-key": String(requireEnv('VAPI_API_KEY')),
-        "Content-Type": "application/json",
+    // Create VAPI assistant
+    const vapiClient = new VAPIClient({ apiKey: String(requireEnv('VAPI_API_KEY')) })
+    const assistant = await vapiClient.createAssistant({
+      name: `${businessName} PrismAI Assistant`,
+      systemMessage: systemMessage,
+      firstMessage: greetingMessage || "Hello! Thank you for calling. How can I assist you today?",
+      voice: {
+        provider: "11labs",
+        voiceId: "21m00Tcm4TlvDq8ikWAM",
       },
-      body: JSON.stringify({
-        name: `${businessName} PrismAI Assistant`,
-        conversation_config: {
-          agent: {
-            prompt: {
-              prompt: systemMessage,
-            },
-            first_message: greetingMessage || "Hello! Thank you for calling. How can I assist you today?",
-            language: "en",
-          },
-          tts: {
-            voice_id: "21m00Tcm4TlvDq8ikWAM",
-            stability: 0.5,
-            similarity_boost: 0.8,
-          },
-        },
-        platform_integration: {
-          type: "twilio",
-        },
-      }),
+      model: {
+        provider: "openai",
+        model: "gpt-3.5-turbo",
+        temperature: 0.7,
+      },
     })
-
-    if (!elevenLabsResponse.ok) {
-      const errorText = await elevenLabsResponse.text()
-      console.error('ElevenLabs agent creation failed:', errorText)
-      throw new ExternalServiceError('ElevenLabs', `Failed to create agent: ${elevenLabsResponse.statusText}`)
-    }
-
-    const agent = await elevenLabsResponse.json()
 
     // Update or create AI configuration
     const configData = {
@@ -104,7 +85,7 @@ BOOKING_REQUEST: {
       greeting_message: greetingMessage || "Hello! Thank you for calling. How can I assist you today?",
       business_hours: businessHours || {},
       services: services || ["General Consultation"],
-      elevenlabs_agent_id: agent.agent_id,
+      elevenlabs_agent_id: assistant.id,
       updated_at: new Date().toISOString(),
     }
 
@@ -131,12 +112,12 @@ BOOKING_REQUEST: {
 
     return NextResponse.json({
       success: true,
-      assistantId: agent.agent_id,
+      assistantId: assistant.id,
       message: "AI assistant configured successfully",
     })
 })
 
-export const GET = withErrorHandling(async (request: NextRequest) => {
+export const GET = withErrorHandling(async (_request: NextRequest) => {
   const supabase = await createClient()
   const {
     data: { user },

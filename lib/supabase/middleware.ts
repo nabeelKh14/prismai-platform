@@ -30,14 +30,14 @@ export async function updateSession(request: NextRequest) {
   })
 
   const supabase = createServerClient(
-    requireEnv('NEXT_PUBLIC_SUPABASE_URL'),
-    requireEnv('NEXT_PUBLIC_SUPABASE_ANON_KEY'),
+    requireEnv('NEXT_PUBLIC_SUPABASE_URL') as unknown as string,
+    requireEnv('NEXT_PUBLIC_SUPABASE_ANON_KEY') as unknown as string,
     {
       cookies: {
         getAll() {
           return request.cookies.getAll()
         },
-        setAll(cookiesToSet) {
+        setAll(cookiesToSet: Array<{ name: string; value: string; options?: any }>) {
           cookiesToSet.forEach(({ name, value }) => request.cookies.set(name, value))
           supabaseResponse = NextResponse.next({
             request,

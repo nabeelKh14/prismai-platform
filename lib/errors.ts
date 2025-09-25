@@ -90,7 +90,7 @@ export function createErrorResponse(error: Error, requestId?: string): NextRespo
     const validationErrors = error.errors.map(err => ({
       field: err.path.join('.'),
       message: err.message,
-      value: err.input,
+      value: (err as any).input ?? undefined,
     }))
     
     return NextResponse.json(
@@ -156,7 +156,7 @@ export function createErrorResponse(error: Error, requestId?: string): NextRespo
 export function withErrorHandling<T extends any[], R>(
   handler: (...args: T) => Promise<R>
 ) {
-  return async (...args: T): Promise<R | NextResponse> => {
+  return async (...args: T): Promise<R | NextResponse | Response | void> => {
     try {
       return await handler(...args)
     } catch (error) {

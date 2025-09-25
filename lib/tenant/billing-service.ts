@@ -176,7 +176,7 @@ export class BillingService {
       .eq('status', 'active')
       .single()
 
-    const limit = subscription?.plan?.limits?.[metric] || 0
+    const limit = (subscription?.plan as any)?.limits?.[metric] || 0
     const totalUsage = currentUsage + additionalUsage
     const remaining = Math.max(0, limit - totalUsage)
     const isWithinLimit = totalUsage <= limit
@@ -450,7 +450,7 @@ export class BillingService {
       .eq('status', 'active')
       .single()
 
-    const limits = subscription?.plan?.limits || {}
+    const limits = (subscription?.plan as any)?.limits || {}
 
     // Generate alerts
     const alerts = Object.entries(currentUsage)

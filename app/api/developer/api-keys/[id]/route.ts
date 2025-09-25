@@ -56,7 +56,7 @@ import { withErrorHandling } from '@/lib/errors'
  */
 export const DELETE = withErrorHandling(async (
   request: NextRequest,
-  { params }: { params: { id: string } }
+  context: { params: Promise<{ id: string }> }
 ) => {
   const supabase = await createClient()
 
@@ -66,7 +66,7 @@ export const DELETE = withErrorHandling(async (
     return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
   }
 
-  const keyId = params.id
+  const { id: keyId } = await context.params
 
   // Verify the API key belongs to the user
   const { data: apiKey, error: keyError } = await supabase

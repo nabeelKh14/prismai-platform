@@ -90,14 +90,21 @@ export class SMSClient {
       const authToken = process.env.TWILIO_AUTH_TOKEN
       if (!authToken) return false
 
+      // Parse the request body as URL-encoded form data
+      const params = new URLSearchParams(requestBody)
+      const paramsObj: Record<string, any> = {}
+      for (const [key, value] of params.entries()) {
+        paramsObj[key] = value
+      }
+
       const expectedSignature = twilio.validateRequest(
         authToken,
         signature,
         url,
-        requestBody
+        paramsObj
       )
 
-      return expectedSignature === signature
+      return expectedSignature
     } catch (error) {
       console.error('Error validating SMS webhook signature:', error)
       return false

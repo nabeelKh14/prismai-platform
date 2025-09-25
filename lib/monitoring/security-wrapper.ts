@@ -6,6 +6,7 @@ import { cdnService } from './cdn-service'
 import { loadBalancer } from './load-balancer'
 import { benchmarkingTools } from './benchmarking-tools'
 import { resourceMonitor } from './resource-monitor'
+import { breachDetectionEngine, SecurityEvent, DetectedBreach } from '@/lib/compliance/breach-detection'
 
 export interface SecurityConfig {
   enableEncryption: boolean
@@ -31,6 +32,9 @@ export class MonitoringSecurityWrapper {
   private static instance: MonitoringSecurityWrapper
   private config: SecurityConfig
   private rateLimitCache: Map<string, { count: number; resetTime: number }> = new Map()
+  private breachDetectionEnabled: boolean = true
+  private securityEventBuffer: SecurityEvent[] = []
+  private readonly SECURITY_EVENT_BUFFER_SIZE = 1000
 
   static getInstance(): MonitoringSecurityWrapper {
     if (!MonitoringSecurityWrapper.instance) {
@@ -58,7 +62,18 @@ export class MonitoringSecurityWrapper {
     logger.info('Monitoring security configuration updated', {
       encryption: this.config.enableEncryption,
       accessControl: this.config.enableAccessControl,
-      auditLogging: this.config.enableAuditLogging
+      auditLogging: this.config.enableAuditLogging,
+      breachDetection: this.breachDetectionEnabled
+    })
+  }
+
+  /**
+   * Configure breach detection settings
+   */
+  configureBreachDetection(enabled: boolean): void {
+    this.breachDetectionEnabled = enabled
+    logger.info('Breach detection configuration updated', {
+      enabled: this.breachDetectionEnabled
     })
   }
 
@@ -82,6 +97,11 @@ export class MonitoringSecurityWrapper {
       // Log audit trail
       if (this.config.enableAuditLogging) {
         await this.logAuditTrail(request)
+      }
+
+      // Process security event for breach detection
+      if (this.breachDetectionEnabled) {
+        await this.processSecurityEvent(request)
       }
 
       // Execute operation
@@ -214,6 +234,178 @@ export class MonitoringSecurityWrapper {
         return this.config.enableEncryption ? this.encryptData(result) : result
       }
     )
+  }
+
+  // Breach Detection Methods
+
+  /**
+   * Process security event for breach detection
+   */
+  private async processSecurityEvent(request: MonitoringRequest): Promise<void> {
+    try {
+      // Convert monitoring request to security event
+      const securityEvent: SecurityEvent = {
+        id: `evt-${Date.now()}-${Math.random().toString(36).substr(2, 6)}`,
+        timestamp: new Date(request.timestamp),
+        source: request.resource,
+        event_type: this.mapToSecurityEventType(request.action),
+        severity: this.determineEventSeverity(request),
+        description: `${request.action} on ${request.resource}`,
+        metadata: {
+          userId: request.userId,
+          ipAddress: request.ipAddress,
+          userAgent: request.userAgent,
+          ...request.metadata
+        }
+      }
+
+      // Add to buffer for analysis
+      this.securityEventBuffer.push(securityEvent)
+
+      // Maintain buffer size
+      if (this.securityEventBuffer.length > this.SECURITY_EVENT_BUFFER_SIZE) {
+        this.securityEventBuffer = this.securityEventBuffer.slice(-this.SECURITY_EVENT_BUFFER_SIZE)
+      }
+
+      // Process through breach detection engine
+      const detectedBreach = await breachDetectionEngine.processSecurityEvent(securityEvent)
+
+      if (detectedBreach) {
+        logger.warn('Breach detected', {
+          incident_id: detectedBreach.incident_id,
+          severity: detectedBreach.severity_score,
+          type: detectedBreach.incident_type,
+          description: detectedBreach.description
+        })
+
+        // Trigger immediate notification for high-severity breaches
+        if (detectedBreach.severity_score >= 4) {
+          await this.handleHighSeverityBreach(detectedBreach)
+        }
+      }
+    } catch (error) {
+      logger.error('Error processing security event for breach detection', {
+        error: error instanceof Error ? error.message : 'Unknown error',
+        request: request
+      })
+    }
+  }
+
+  /**
+   * Handle high-severity breach detection
+   */
+  private async handleHighSeverityBreach(breach: DetectedBreach): Promise<void> {
+    try {
+      // Log critical breach
+      await logger.error('High-severity breach detected', {
+        incident_id: breach.incident_id,
+        severity: breach.severity_score,
+        type: breach.incident_type,
+        description: breach.description,
+        affected_systems: breach.affected_systems,
+        affected_data_types: breach.affected_data_types
+      })
+
+      // Could trigger immediate notifications, alerts, or automated responses
+      // For now, just log the detection
+    } catch (error) {
+      logger.error('Error handling high-severity breach', {
+        error: error instanceof Error ? error.message : 'Unknown error',
+        breach_id: breach.incident_id
+      })
+    }
+  }
+
+  /**
+   * Map monitoring action to security event type
+   */
+  private mapToSecurityEventType(action: string): string {
+    const mapping: Record<string, string> = {
+      'get_metrics': 'monitoring_access',
+      'get_system_health': 'system_query',
+      'database_query': 'database_access',
+      'cdn_analytics': 'cdn_access',
+      'load_balancer_stats': 'infrastructure_access',
+      'resource_usage': 'resource_monitoring',
+      'run_benchmark': 'performance_test',
+      'unauthorized_access': 'unauthorized_access',
+      'suspicious_activity': 'suspicious_activity',
+      'data_exfiltration': 'data_exfiltration',
+      'malware_detected': 'malware',
+      'failed_login': 'authentication_failure'
+    }
+
+    return mapping[action] || 'security_event'
+  }
+
+  /**
+   * Determine severity of security event
+   */
+  private determineEventSeverity(request: MonitoringRequest): 'low' | 'medium' | 'high' | 'critical' {
+    // Check for suspicious patterns
+    if (request.ipAddress && this.isSuspiciousIP(request.ipAddress)) {
+      return 'high'
+    }
+
+    if (request.action.includes('unauthorized') || request.action.includes('failed')) {
+      return 'medium'
+    }
+
+    if (request.metadata?.suspicious === true) {
+      return 'high'
+    }
+
+    return 'low'
+  }
+
+  /**
+   * Check if IP address is suspicious
+   */
+  private isSuspiciousIP(ipAddress: string): boolean {
+    // Simple check for obviously suspicious IPs
+    const suspiciousPatterns = [
+      /^192\.168\./, // Internal IP accessing external resources suspiciously
+      /^10\./,       // Internal IP
+      /^172\.(1[6-9]|2[0-9]|3[0-1])\./, // Internal IP
+      /^127\./       // Localhost
+    ]
+
+    return suspiciousPatterns.some(pattern => pattern.test(ipAddress))
+  }
+
+  /**
+   * Get security events from buffer
+   */
+  getSecurityEvents(limit: number = 100): SecurityEvent[] {
+    return this.securityEventBuffer.slice(-limit)
+  }
+
+  /**
+   * Clear security event buffer
+   */
+  clearSecurityEventBuffer(): void {
+    this.securityEventBuffer = []
+  }
+
+  /**
+   * Get breach detection statistics
+   */
+  getBreachDetectionStats(): {
+    events_processed: number
+    breaches_detected: number
+    high_severity_events: number
+    buffer_size: number
+  } {
+    const highSeverityEvents = this.securityEventBuffer.filter(
+      event => event.severity === 'high' || event.severity === 'critical'
+    ).length
+
+    return {
+      events_processed: this.securityEventBuffer.length,
+      breaches_detected: 0, // Would be tracked in actual implementation
+      high_severity_events: highSeverityEvents,
+      buffer_size: this.securityEventBuffer.length
+    }
   }
 
   // Private security methods

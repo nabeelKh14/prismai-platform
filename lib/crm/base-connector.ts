@@ -1,6 +1,10 @@
 import { CRMConfig, CRMConnector, CustomerData, ConversationContext, Activity } from './types'
 import { logger } from '@/lib/logger'
 import { createHash } from 'crypto'
+import { crmErrorHandler, CRMError, CRMErrorContext } from './error-handler'
+import { retryManager } from './retry-mechanism'
+import { crmRateLimitManager } from './rate-limiter'
+import { circuitBreakerManager } from './circuit-breaker'
 
 export abstract class BaseCRMConnector implements CRMConnector {
   protected config: CRMConfig
@@ -47,6 +51,14 @@ export abstract class BaseCRMConnector implements CRMConnector {
   }
 
   async getCustomer(externalId: string): Promise<CustomerData | null> {
+    const context: CRMErrorContext = {
+      userId: this.config.userId,
+      provider: this.provider,
+      operation: 'getCustomer',
+      customerId: externalId,
+      timestamp: new Date()
+    }
+
     try {
       const endpoint = this.getCustomerEndpoint(externalId)
       const response = await this.makeRequest(endpoint, 'GET')
@@ -59,12 +71,9 @@ export abstract class BaseCRMConnector implements CRMConnector {
       const data = await response.json()
       return this.mapToCustomerData(data)
     } catch (error) {
-      logger.error(`Failed to get customer from ${this.provider}`, error as Error, {
-        userId: this.config.userId,
-        externalId,
-        provider: this.provider
-      })
-      return null
+      return crmErrorHandler.handleError(error as Error, context, () => this.getCustomer(externalId))
+        .then(result => result as CustomerData | null)
+        .catch(() => null)
     }
   }
 
@@ -91,6 +100,14 @@ export abstract class BaseCRMConnector implements CRMConnector {
   }
 
   async createCustomer(customer: Partial<CustomerData>): Promise<CustomerData> {
+    const context: CRMErrorContext = {
+      userId: this.config.userId,
+      provider: this.provider,
+      operation: 'createCustomer',
+      customerId: customer.externalId,
+      timestamp: new Date()
+    }
+
     try {
       const endpoint = this.getCreateCustomerEndpoint()
       const payload = this.mapFromCustomerData(customer)
@@ -104,12 +121,8 @@ export abstract class BaseCRMConnector implements CRMConnector {
       const data = await response.json()
       return this.mapToCustomerData(data)
     } catch (error) {
-      logger.error(`Failed to create customer in ${this.provider}`, error as Error, {
-        userId: this.config.userId,
-        customer,
-        provider: this.provider
-      })
-      throw error
+      return crmErrorHandler.handleError(error as Error, context, () => this.createCustomer(customer))
+        .then(result => result as CustomerData)
     }
   }
 
@@ -231,33 +244,68 @@ export abstract class BaseCRMConnector implements CRMConnector {
   // Protected helper methods
   protected async makeRequest(endpoint: string, method: string = 'GET', body?: any): Promise<Response> {
     const url = endpoint.startsWith('http') ? endpoint : `${this.baseUrl}${endpoint}`
-    const headers = {
-      'Content-Type': 'application/json',
-      ...this.authHeaders
+    const operation = `${method} ${endpoint}`
+
+    const context: CRMErrorContext = {
+      userId: this.config.userId,
+      provider: this.provider,
+      operation,
+      endpoint,
+      timestamp: new Date()
     }
 
-    const options: RequestInit = {
-      method,
-      headers
-    }
+    // Execute with comprehensive reliability features
+    return retryManager.executeWithProviderRetry(
+      this.provider,
+      operation,
+      async () => {
+        // Check rate limits
+        const rateLimitStatus = await crmRateLimitManager.checkRateLimit(
+          this.provider,
+          operation,
+          'medium'
+        )
 
-    if (body) {
-      options.body = JSON.stringify(body)
-    }
+        if (!rateLimitStatus.allowed) {
+          throw new CRMError(
+            'rate_limit_error' as any,
+            `Rate limit exceeded for ${this.provider}`,
+            context,
+            undefined,
+            429
+          )
+        }
 
-    const response = await fetch(url, options)
+        const headers = {
+          'Content-Type': 'application/json',
+          ...this.authHeaders
+        }
 
-    // Handle token refresh on 401
-    if (response.status === 401 && this.config.refreshToken) {
-      const refreshed = await this.refreshToken()
-      if (refreshed) {
-        // Retry the request with new token
-        this.authHeaders = await this.getAuthHeaders()
-        return this.makeRequest(endpoint, method, body)
-      }
-    }
+        const options: RequestInit = {
+          method,
+          headers
+        }
 
-    return response
+        if (body) {
+          options.body = JSON.stringify(body)
+        }
+
+        const response = await fetch(url, options)
+
+        // Handle token refresh on 401
+        if (response.status === 401 && this.config.refreshToken) {
+          const refreshed = await this.refreshToken()
+          if (refreshed) {
+            // Retry the request with new token
+            this.authHeaders = await this.getAuthHeaders()
+            return this.makeRequest(endpoint, method, body)
+          }
+        }
+
+        return response
+      },
+      context
+    )
   }
 
   protected generateWebhookSignature(payload: any): string {

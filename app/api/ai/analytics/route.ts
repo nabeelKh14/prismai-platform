@@ -1,17 +1,10 @@
 import { type NextRequest, NextResponse } from "next/server"
 import { createClient } from "@/lib/supabase/server"
 import { z } from "zod"
-import { withErrorHandling, ValidationError, AuthenticationError } from "@/lib/errors"
+import { withErrorHandling, AuthenticationError } from "@/lib/errors"
 import { geminiClient } from "@/lib/ai/gemini-client"
 
 // Validation schemas
-const analyticsQuerySchema = z.object({
-  timeframe: z.enum(['7d', '30d', '90d', '1y', 'custom']),
-  startDate: z.string().datetime().optional(),
-  endDate: z.string().datetime().optional(),
-  metrics: z.array(z.string()).optional(),
-  segments: z.array(z.string()).optional(),
-})
 
 const insightRequestSchema = z.object({
   type: z.enum(['performance', 'predictions', 'recommendations', 'trends']),
@@ -389,7 +382,7 @@ export const POST = withErrorHandling(async (request: NextRequest) => {
     created_at: new Date().toISOString()
   }
 
-  // You could store these in a separate insights table if needed
+  // Note: Insights could be stored in a separate insights table if needed
 
   return NextResponse.json({
     success: true,

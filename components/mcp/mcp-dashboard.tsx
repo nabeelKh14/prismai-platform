@@ -52,14 +52,6 @@ export function MCPDashboard() {
       lastPing: '2 minutes ago'
     },
     {
-      name: 'wikipedia-mcp',
-      capabilities: ['Knowledge Lookup', 'Entity Extraction', 'Fact Checking'],
-      status: 'healthy',
-      description: 'Company and industry knowledge from Wikipedia',
-      freeLimit: 'Unlimited',
-      lastPing: '1 minute ago'
-    },
-    {
       name: 'clearbit-mcp',
       capabilities: ['Company Enrichment', 'Person Enrichment', 'Email Verification'],
       status: 'healthy',
@@ -112,7 +104,7 @@ export function MCPDashboard() {
   const mockStats: MCPStats = {
     totalEnhancements: 1247,
     avgScoreImprovement: 23.5,
-    topSources: ['GitHub', 'Clearbit', 'Hunter.io'],
+    topSources: ['GitHub', 'Clearbit', 'Hunter.io', 'StackOverflow'],
     successRate: 94.2
   }
 
@@ -368,13 +360,6 @@ export function MCPDashboard() {
                   <Badge className="bg-green-500/20 text-green-400">Active</Badge>
                 </div>
                 
-                <div className="flex items-center justify-between p-4 border border-gray-700 rounded">
-                  <div>
-                    <div className="font-medium text-white">Chatbot Knowledge</div>
-                    <div className="text-sm text-gray-400">Wikipedia integration for chatbot responses</div>
-                  </div>
-                  <Badge className="bg-green-500/20 text-green-400">Active</Badge>
-                </div>
                 
                 <div className="flex items-center justify-between p-4 border border-gray-700 rounded">
                   <div>

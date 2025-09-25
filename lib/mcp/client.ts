@@ -5,6 +5,8 @@
 
 import { z } from 'zod'
 import { logger } from '@/lib/logger'
+import { intelligentCache } from './cache'
+import { performanceMonitor } from './performance-monitor'
 
 // MCP Message Types
 const MCPRequestSchema = z.object({
@@ -63,11 +65,6 @@ class MCPClient {
       {
         name: 'github-mcp',
         capabilities: ['profile_analysis', 'repository_data', 'activity_tracking'],
-        status: 'disconnected'
-      },
-      {
-        name: 'wikipedia-mcp',
-        capabilities: ['knowledge_lookup', 'entity_extraction', 'fact_checking'],
         status: 'disconnected'
       },
       {
@@ -138,8 +135,22 @@ class MCPClient {
    * Send request to MCP server
    */
   async request(serverName: string, request: MCPRequest): Promise<MCPResponse> {
+    const startTime = Date.now()
+    let cacheHit = false
+    let dataSize = 0
+
     const server = this.servers.get(serverName)
     if (!server || server.status !== 'connected') {
+      performanceMonitor.recordMetric({
+        source: serverName,
+        operation: request.method,
+        duration: Date.now() - startTime,
+        success: false,
+        cacheHit: false,
+        dataSize: 0,
+        errorType: 'server_not_connected'
+      })
+
       return {
         error: {
           code: -1,
@@ -150,34 +161,71 @@ class MCPClient {
 
     try {
       const validatedRequest = MCPRequestSchema.parse(request)
-      
+
       // Route to appropriate handler based on server
+      let response: MCPResponse
       switch (serverName) {
         case 'github-mcp':
-          return await this.handleGitHubMCP(validatedRequest)
-        case 'wikipedia-mcp':
-          return await this.handleWikipediaMCP(validatedRequest)
+          response = await this.handleGitHubMCP(validatedRequest)
+          break
         case 'clearbit-mcp':
-          return await this.handleClearbitMCP(validatedRequest)
+          response = await this.handleClearbitMCP(validatedRequest)
+          break
         case 'hunter-mcp':
-          return await this.handleHunterMCP(validatedRequest)
+          response = await this.handleHunterMCP(validatedRequest)
+          break
         case 'discord-mcp':
-          return await this.handleDiscordMCP(validatedRequest)
+          response = await this.handleDiscordMCP(validatedRequest)
+          break
         case 'telegram-mcp':
-          return await this.handleTelegramMCP(validatedRequest)
+          response = await this.handleTelegramMCP(validatedRequest)
+          break
         case 'stackoverflow-mcp':
-          return await this.handleStackOverflowMCP(validatedRequest)
+          response = await this.handleStackOverflowMCP(validatedRequest)
+          break
         case 'reddit-mcp':
-          return await this.handleRedditMCP(validatedRequest)
+          response = await this.handleRedditMCP(validatedRequest)
+          break
         default:
-          return {
+          response = {
             error: {
               code: -2,
               message: `Handler not implemented for ${serverName}`
             }
           }
       }
+
+      // Calculate data size if response has result
+      if (response.result) {
+        dataSize = JSON.stringify(response.result).length
+      }
+
+      // Record performance metric
+      performanceMonitor.recordMetric({
+        source: serverName,
+        operation: request.method,
+        duration: Date.now() - startTime,
+        success: !response.error,
+        cacheHit,
+        dataSize,
+        errorType: response.error ? 'api_error' : undefined
+      })
+
+      return response
     } catch (error) {
+      const duration = Date.now() - startTime
+
+      // Record failed metric
+      performanceMonitor.recordMetric({
+        source: serverName,
+        operation: request.method,
+        duration,
+        success: false,
+        cacheHit: false,
+        dataSize: 0,
+        errorType: 'exception'
+      })
+
       logger.error(`MCP request failed for ${serverName}:`, error)
       return {
         error: {
@@ -200,28 +248,38 @@ class MCPClient {
         }
 
         try {
-          const response = await fetch(`https://api.github.com/users/${username}`)
-          const userData = await response.json()
-          
-          if (!response.ok) {
-            return { error: { code: response.status, message: userData.message } }
+          // Check cache first
+          const cacheKey = `github:${username}`
+          const cachedData = await intelligentCache.get(cacheKey, 'github', async () => {
+            const response = await fetch(`https://api.github.com/users/${username}`)
+            const userData = await response.json()
+
+            if (!response.ok) {
+              throw new Error(userData.message || `GitHub API error: ${response.status}`)
+            }
+
+            return userData
+          })
+
+          if (!cachedData) {
+            return { error: { code: 500, message: 'Failed to fetch GitHub profile' } }
           }
 
           // Analyze GitHub profile for lead scoring
           const analysis = {
-            username: userData.login,
-            name: userData.name,
-            company: userData.company,
-            followers: userData.followers,
-            following: userData.following,
-            publicRepos: userData.public_repos,
-            accountAge: new Date().getFullYear() - new Date(userData.created_at).getFullYear(),
-            leadScore: this.calculateGitHubLeadScore(userData)
+            username: cachedData.login,
+            name: cachedData.name,
+            company: cachedData.company,
+            followers: cachedData.followers,
+            following: cachedData.following,
+            publicRepos: cachedData.public_repos,
+            accountAge: new Date().getFullYear() - new Date(cachedData.created_at).getFullYear(),
+            leadScore: this.calculateGitHubLeadScore(cachedData)
           }
 
           return { result: analysis }
         } catch (error) {
-          return { error: { code: 500, message: 'GitHub API request failed' } }
+          return { error: { code: 500, message: error instanceof Error ? error.message : 'GitHub API request failed' } }
         }
 
       default:
@@ -229,42 +287,6 @@ class MCPClient {
     }
   }
 
-  /**
-   * Wikipedia MCP Handler
-   */
-  private async handleWikipediaMCP(request: MCPRequest): Promise<MCPResponse> {
-    switch (request.method) {
-      case 'search_knowledge':
-        const query = request.params?.query
-        if (!query) {
-          return { error: { code: 400, message: 'Query required' } }
-        }
-
-        try {
-          const searchUrl = `https://en.wikipedia.org/api/rest_v1/page/summary/${encodeURIComponent(query)}`
-          const response = await fetch(searchUrl)
-          const data = await response.json()
-
-          if (!response.ok) {
-            return { error: { code: response.status, message: 'Wikipedia search failed' } }
-          }
-
-          return {
-            result: {
-              title: data.title,
-              extract: data.extract,
-              url: data.content_urls?.desktop?.page,
-              thumbnail: data.thumbnail?.source
-            }
-          }
-        } catch (error) {
-          return { error: { code: 500, message: 'Wikipedia API request failed' } }
-        }
-
-      default:
-        return { error: { code: 404, message: `Method ${request.method} not found` } }
-    }
-  }
 
   /**
    * Clearbit MCP Handler (Free tier: 50 enrichments/month)
@@ -277,17 +299,23 @@ class MCPClient {
           return { error: { code: 400, message: 'Domain required' } }
         }
 
-        // Simulate Clearbit API (you'd need actual API key for real implementation)
-        const mockEnrichment = {
-          domain,
-          name: `${domain.split('.')[0].charAt(0).toUpperCase() + domain.split('.')[0].slice(1)} Inc`,
-          employees: Math.floor(Math.random() * 10000) + 10,
-          industry: 'Technology',
-          funding: Math.floor(Math.random() * 100000000),
-          location: 'San Francisco, CA'
-        }
+        // Check cache first
+        const cacheKey = `clearbit:${domain}`
+        const cachedData = await intelligentCache.get(cacheKey, 'clearbit', async () => {
+          // Simulate Clearbit API (you'd need actual API key for real implementation)
+          const mockEnrichment = {
+            domain,
+            name: `${domain.split('.')[0].charAt(0).toUpperCase() + domain.split('.')[0].slice(1)} Inc`,
+            employees: Math.floor(Math.random() * 10000) + 10,
+            industry: 'Technology',
+            funding: Math.floor(Math.random() * 100000000),
+            location: 'San Francisco, CA'
+          }
 
-        return { result: mockEnrichment }
+          return mockEnrichment
+        })
+
+        return { result: cachedData }
 
       default:
         return { error: { code: 404, message: `Method ${request.method} not found` } }
@@ -352,21 +380,31 @@ class MCPClient {
         }
 
         try {
-          const searchUrl = `https://api.stackexchange.com/2.3/search/advanced?order=desc&sort=relevance&q=${encodeURIComponent(query)}&site=stackoverflow`
-          const response = await fetch(searchUrl)
-          const data = await response.json()
+          // Check cache first
+          const cacheKey = `stackoverflow:${query}`
+          const cachedData = await intelligentCache.get(cacheKey, 'stackoverflow', async () => {
+            const searchUrl = `https://api.stackexchange.com/2.3/search/advanced?order=desc&sort=relevance&q=${encodeURIComponent(query)}&site=stackoverflow`
+            const response = await fetch(searchUrl)
+            const data = await response.json()
 
-          const questions = data.items?.slice(0, 3).map((item: any) => ({
-            title: item.title,
-            url: item.link,
-            score: item.score,
-            answered: item.is_answered,
-            tags: item.tags
-          })) || []
+            if (!response.ok) {
+              throw new Error(`StackOverflow API error: ${response.status}`)
+            }
 
-          return { result: questions }
+            const questions = data.items?.slice(0, 3).map((item: any) => ({
+              title: item.title,
+              url: item.link,
+              score: item.score,
+              answered: item.is_answered,
+              tags: item.tags
+            })) || []
+
+            return questions
+          })
+
+          return { result: cachedData }
         } catch (error) {
-          return { error: { code: 500, message: 'StackOverflow API request failed' } }
+          return { error: { code: 500, message: error instanceof Error ? error.message : 'StackOverflow API request failed' } }
         }
 
       default:

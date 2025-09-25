@@ -86,15 +86,30 @@ const preferencesSchema = z.object({
 })
 
 export class UserProfileService {
+  /**
+   * PRIVACY BY DESIGN: Default user profile settings prioritize user privacy
+   * - emailNotifications: false (users must opt-in to receive emails)
+   * - smsNotifications: false (users must opt-in to receive SMS)
+   * - marketingEmails: false (prevents unsolicited marketing communications)
+   * This implements data minimization and purpose limitation principles.
+   */
   private static readonly DEFAULT_PROFILE: Partial<UserProfile> = {
     timezone: 'UTC',
     language: 'en',
     theme: 'system',
-    emailNotifications: true,
+    emailNotifications: false, // PRIVACY: Default to false to respect user privacy - users must opt-in to receive emails
     smsNotifications: false,
     marketingEmails: false
   }
 
+  /**
+   * PRIVACY BY DESIGN: Default notification preferences implement data minimization
+   * - Security notifications: enabled by default (essential for user safety)
+   * - Marketing notifications: disabled by default (prevents unsolicited communications)
+   * - Update notifications: disabled by default (users must opt-in)
+   * - In-app notifications: disabled by default (prevents unwanted interruptions)
+   * This ensures users only receive notifications they explicitly consent to.
+   */
   private static readonly DEFAULT_PREFERENCES: UserPreferences = {
     dashboardLayout: 'grid',
     defaultView: 'dashboard',
@@ -103,18 +118,18 @@ export class UserProfileService {
     currency: 'USD',
     notifications: {
       email: {
-        security: true,
-        marketing: false,
-        updates: true
+        security: true, // PRIVACY: Security notifications must remain enabled for safety
+        marketing: false, // PRIVACY: Default to false to prevent unsolicited marketing
+        updates: false // PRIVACY: Default to false to respect user privacy - users must opt-in for updates
       },
       sms: {
-        security: true,
-        alerts: false
+        security: true, // PRIVACY: Security notifications must remain enabled for safety
+        alerts: false // PRIVACY: Default to false to prevent unsolicited alerts
       },
       inApp: {
-        mentions: true,
-        replies: true,
-        updates: true
+        mentions: false, // PRIVACY: Default to false to respect user privacy - users must opt-in for mentions
+        replies: false, // PRIVACY: Default to false to respect user privacy - users must opt-in for replies
+        updates: false // PRIVACY: Default to false to respect user privacy - users must opt-in for updates
       }
     }
   }

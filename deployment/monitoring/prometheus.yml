@@ -1,0 +1,92 @@
+# ==============================================================================
+# PROMETHEUS CONFIGURATION
+# PrismAI Production Monitoring
+# ==============================================================================
+
+global:
+  scrape_interval: 15s
+  evaluation_interval: 15s
+  scrape_timeout: 10s
+
+  # External labels
+  external_labels:
+    monitor: 'prismai-production'
+
+rule_files:
+  - '/etc/prometheus/rules/*.yml'
+
+scrape_configs:
+  # Application metrics
+  - job_name: 'prismai-app'
+    static_configs:
+      - targets: ['localhost:3000']
+    scrape_interval: 10s
+    metrics_path: '/api/monitoring/metrics'
+    params:
+      format: ['prometheus']
+    relabel_configs:
+      - source_labels: [__address__]
+        target_label: instance
+        replacement: 'prismai-app:3000'
+
+  # Node exporter for system metrics
+  - job_name: 'node'
+    static_configs:
+      - targets: ['localhost:9100']
+    scrape_interval: 30s
+
+  # Database metrics (Supabase)
+  - job_name: 'database'
+    static_configs:
+      - targets: ['localhost:9187']
+    scrape_interval: 30s
+
+  # Redis metrics
+  - job_name: 'redis'
+    static_configs:
+      - targets: ['localhost:9121']
+    scrape_interval: 30s
+
+  # Load balancer metrics
+  - job_name: 'load-balancer'
+    static_configs:
+      - targets: ['localhost:1936']
+    scrape_interval: 30s
+
+  # Custom application metrics
+  - job_name: 'prismai-custom'
+    static_configs:
+      - targets: ['localhost:3000']
+    scrape_interval: 15s
+    metrics_path: '/api/monitoring/metrics'
+    params:
+      type: ['custom']
+    relabel_configs:
+      - source_labels: [__address__]
+        target_label: instance
+        replacement: 'prismai-custom:3000'
+
+# Alertmanager configuration
+alerting:
+  alertmanagers:
+    - static_configs:
+        - targets: ['localhost:9093']
+
+# Remote write configuration (for external monitoring services)
+remote_write:
+  - url: 'https://prometheus-prod-10-prod-us-central-0.grafana.net/api/prom/push'
+    basic_auth:
+      username: '${PROMETHEUS_USERNAME}'
+      password: '${PROMETHEUS_PASSWORD}'
+    write_relabel_configs:
+      - source_labels: [__name__]
+        regex: 'go_.*|prometheus_.*'
+        action: keep
+
+# Remote read configuration
+remote_read:
+  - url: 'https://prometheus-prod-10-prod-us-central-0.grafana.net/api/prom/api/v1/read'
+    basic_auth:
+      username: '${PROMETHEUS_USERNAME}'
+      password: '${PROMETHEUS_PASSWORD}'
+    read_recent: true

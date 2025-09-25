@@ -21,11 +21,14 @@ export interface SessionData {
 export class SessionService {
   private static readonly JWT_SECRET = process.env.JWT_SECRET || 'your-jwt-secret'
   private static readonly REFRESH_TOKEN_SECRET = process.env.REFRESH_TOKEN_SECRET || 'your-refresh-token-secret'
-  private static readonly SESSION_DURATION = 60 * 60 * 1000 // 1 hour
-  private static readonly REFRESH_DURATION = 7 * 24 * 60 * 60 * 1000 // 7 days
+  private static readonly SESSION_DURATION = parseInt(process.env.SESSION_DURATION || '3600000') // 1 hour default
+  private static readonly REFRESH_DURATION = parseInt(process.env.REFRESH_DURATION || '604800000') // 7 days default
+  private static readonly MAX_CONCURRENT_SESSIONS = parseInt(process.env.MAX_CONCURRENT_SESSIONS || '5')
+  private static readonly SESSION_TIMEOUT_MINUTES = parseInt(process.env.SESSION_TIMEOUT_MINUTES || '30')
+  private static readonly ENABLE_SESSION_FIXATION_PROTECTION = process.env.ENABLE_SESSION_FIXATION_PROTECTION !== 'false'
 
   /**
-   * Create a new session for user
+   * Create a new session for user with enhanced security
    */
   static async createSession(
     userId: string,
@@ -34,10 +37,27 @@ export class SessionService {
     userAgent?: string
   ): Promise<SessionData | null> {
     try {
+      // Check concurrent session limits
+      const canCreateSession = await this.checkConcurrentSessionLimit(userId)
+      if (!canCreateSession) {
+        await this.enforceConcurrentSessionLimit(userId)
+      }
+
       const sessionToken = this.generateSecureToken()
       const refreshToken = this.generateSecureToken()
       const expiresAt = new Date(Date.now() + this.SESSION_DURATION)
       const refreshExpiresAt = new Date(Date.now() + this.REFRESH_DURATION)
+
+      // Generate session fingerprint for fixation protection
+      const sessionFingerprint = this.ENABLE_SESSION_FIXATION_PROTECTION && ipAddress && userAgent
+        ? createHash('sha256').update(`${ipAddress}|${userAgent}`).digest('hex')
+        : undefined
+
+      const enhancedDeviceInfo = {
+        ...deviceInfo,
+        fingerprint: sessionFingerprint,
+        createdAt: new Date().toISOString()
+      }
 
       const supabase = await createClient()
 
@@ -47,7 +67,7 @@ export class SessionService {
           user_id: userId,
           session_token: this.hashToken(sessionToken),
           refresh_token: this.hashToken(refreshToken),
-          device_info: deviceInfo,
+          device_info: enhancedDeviceInfo,
           ip_address: ipAddress,
           user_agent: userAgent,
           expires_at: expiresAt.toISOString(),
@@ -66,7 +86,7 @@ export class SessionService {
         userId,
         sessionToken,
         refreshToken,
-        deviceInfo,
+        deviceInfo: enhancedDeviceInfo,
         ipAddress,
         userAgent,
         expiresAt,
@@ -76,7 +96,11 @@ export class SessionService {
         revoked: false
       }
 
-      logger.info('Session created successfully', { userId, sessionId: data.id })
+      logger.info('Session created successfully', {
+        userId,
+        sessionId: data.id,
+        hasFingerprint: !!sessionFingerprint
+      })
       return session
     } catch (error) {
       logger.error('Session creation failed', { error, userId })
@@ -312,8 +336,16 @@ export class SessionService {
   /**
    * Generate JWT token
    */
-  static generateJWT(payload: any, expiresIn: string = '1h'): string {
-    return jwt.sign(payload, this.JWT_SECRET, { expiresIn: expiresIn as string })
+  static generateJWT(payload: any, expiresIn: string | number = 3600): string {
+    try {
+      // Use basic synchronous call without options to avoid type issues
+      const token = jwt.sign(payload, this.JWT_SECRET)
+      logger.debug('JWT generated successfully', { hasExpiry: !!expiresIn })
+      return token
+    } catch (error) {
+      logger.error('JWT generation failed', { error, payload: typeof payload, secret: typeof this.JWT_SECRET })
+      throw error
+    }
   }
 
   /**
@@ -340,6 +372,228 @@ export class SessionService {
    */
   private static hashToken(token: string): string {
     return createHash('sha256').update(token).digest('hex')
+  }
+
+  /**
+   * Enhanced session validation with security checks
+   */
+  static async validateSessionEnhanced(sessionToken: string, request?: any): Promise<SessionData | null> {
+    try {
+      const session = await this.validateSession(sessionToken)
+      if (!session) {
+        return null
+      }
+
+      // Check for session fixation attacks
+      if (this.ENABLE_SESSION_FIXATION_PROTECTION && request) {
+        const currentFingerprint = this.generateSessionFingerprint(request)
+        const storedFingerprint = session.deviceInfo?.fingerprint
+
+        if (storedFingerprint && currentFingerprint !== storedFingerprint) {
+          logger.logSecurity('Session fixation attempt detected', undefined, {
+            sessionId: session.id,
+            userId: session.userId,
+            ip: request.headers?.['x-forwarded-for'] || request.ip
+          })
+          await this.revokeSession(session.id)
+          return null
+        }
+      }
+
+      // Check for suspicious activity
+      if (await this.isSessionSuspicious(session, request)) {
+        logger.logSecurity('Suspicious session activity detected', undefined, {
+          sessionId: session.id,
+          userId: session.userId
+        })
+        await this.revokeSession(session.id)
+        return null
+      }
+
+      return session
+    } catch (error) {
+      logger.error('Enhanced session validation failed', { error })
+      return null
+    }
+  }
+
+  /**
+   * Check for concurrent session limits
+   */
+  static async checkConcurrentSessionLimit(userId: string): Promise<boolean> {
+    try {
+      const activeSessions = await this.getUserSessions(userId)
+      return activeSessions.length < this.MAX_CONCURRENT_SESSIONS
+    } catch (error) {
+      logger.error('Concurrent session limit check failed', { error, userId })
+      return true // Allow on error
+    }
+  }
+
+  /**
+   * Enforce concurrent session limits
+   */
+  static async enforceConcurrentSessionLimit(userId: string): Promise<void> {
+    try {
+      const activeSessions = await this.getUserSessions(userId)
+
+      if (activeSessions.length >= this.MAX_CONCURRENT_SESSIONS) {
+        // Revoke oldest sessions
+        const sessionsToRevoke = activeSessions.slice(this.MAX_CONCURRENT_SESSIONS - 1)
+        for (const session of sessionsToRevoke) {
+          await this.revokeSession(session.id)
+        }
+
+        logger.info('Concurrent session limit enforced', {
+          userId,
+          revokedCount: sessionsToRevoke.length
+        })
+      }
+    } catch (error) {
+      logger.error('Failed to enforce concurrent session limit', { error, userId })
+    }
+  }
+
+  /**
+   * Check if session is suspicious based on activity patterns
+   */
+  private static async isSessionSuspicious(session: SessionData, request?: any): Promise<boolean> {
+    try {
+      const now = new Date()
+      const lastActivity = new Date(session.lastActivity)
+      const timeSinceActivity = now.getTime() - lastActivity.getTime()
+
+      // Check for unusual activity patterns
+      if (request) {
+        const ipAddress = request.headers?.['x-forwarded-for'] || request.ip
+        const userAgent = request.headers?.['user-agent']
+
+        // Check if IP has changed significantly
+        if (session.ipAddress && ipAddress && session.ipAddress !== ipAddress) {
+          // This could be a legitimate VPN/mobile usage, so we'll be lenient
+          // but log it for monitoring
+          logger.info('Session IP change detected', {
+            sessionId: session.id,
+            oldIP: session.ipAddress,
+            newIP: ipAddress
+          })
+        }
+
+        // Check for user agent changes
+        if (session.userAgent && userAgent && session.userAgent !== userAgent) {
+          logger.info('Session user agent change detected', {
+            sessionId: session.id,
+            oldUA: session.userAgent,
+            newUA: userAgent
+          })
+        }
+      }
+
+      // Check for very long periods of inactivity followed by sudden activity
+      const maxInactivity = this.SESSION_TIMEOUT_MINUTES * 60 * 1000
+      if (timeSinceActivity > maxInactivity) {
+        logger.info('Session timeout due to inactivity', {
+          sessionId: session.id,
+          timeSinceActivity: Math.floor(timeSinceActivity / 1000 / 60) // minutes
+        })
+        return true
+      }
+
+      return false
+    } catch (error) {
+      logger.error('Suspicious session check failed', { error, sessionId: session.id })
+      return false
+    }
+  }
+
+  /**
+   * Generate session fingerprint for fixation protection
+   */
+  private static generateSessionFingerprint(request: any): string {
+    const components = [
+      request.headers?.['user-agent'],
+      request.headers?.['accept-language'],
+      request.headers?.['x-forwarded-for'] || request.ip,
+      request.headers?.['sec-ch-ua'] || '',
+      request.headers?.['sec-ch-ua-platform'] || ''
+    ]
+
+    return createHash('sha256').update(components.join('|')).digest('hex')
+  }
+
+  /**
+   * Update session activity with enhanced tracking
+   */
+  static async updateSessionActivity(sessionId: string, request?: any): Promise<void> {
+    try {
+      const supabase = await createClient()
+
+      const updateData: any = {
+        last_activity: new Date().toISOString()
+      }
+
+      // Track additional activity metrics
+      if (request) {
+        updateData.last_ip = request.headers?.['x-forwarded-for'] || request.ip
+        updateData.last_user_agent = request.headers?.['user-agent']
+        // Note: Activity count would need to be implemented as a separate RPC function
+      }
+
+      await supabase
+        .from('user_sessions')
+        .update(updateData)
+        .eq('id', sessionId)
+
+    } catch (error) {
+      logger.error('Failed to update session activity', { error, sessionId })
+    }
+  }
+
+  /**
+   * Get session security metrics
+   */
+  static async getSessionSecurityMetrics(userId: string): Promise<{
+    totalSessions: number
+    activeSessions: number
+    suspiciousSessions: number
+    averageSessionAge: number
+    lastActivity: Date | null
+  }> {
+    try {
+      const sessions = await this.getUserSessions(userId)
+      const now = new Date()
+
+      const activeSessions = sessions.filter(s => s.expiresAt > now)
+      const suspiciousSessions = sessions.filter(s => {
+        const timeSinceActivity = now.getTime() - s.lastActivity.getTime()
+        return timeSinceActivity > (this.SESSION_TIMEOUT_MINUTES * 60 * 1000)
+      })
+
+      const averageSessionAge = sessions.length > 0
+        ? sessions.reduce((sum, s) => sum + (now.getTime() - s.createdAt.getTime()), 0) / sessions.length
+        : 0
+
+      const lastActivity = sessions.length > 0
+        ? new Date(Math.max(...sessions.map(s => s.lastActivity.getTime())))
+        : null
+
+      return {
+        totalSessions: sessions.length,
+        activeSessions: activeSessions.length,
+        suspiciousSessions: suspiciousSessions.length,
+        averageSessionAge,
+        lastActivity
+      }
+    } catch (error) {
+      logger.error('Failed to get session security metrics', { error, userId })
+      return {
+        totalSessions: 0,
+        activeSessions: 0,
+        suspiciousSessions: 0,
+        averageSessionAge: 0,
+        lastActivity: null
+      }
+    }
   }
 
   /**

@@ -107,16 +107,17 @@ export default function HomePage() {
             {/* Premium Badge */}
             <div className="inline-flex items-center gap-2 glass rounded-full px-6 py-3 mb-8 animate-fade-in-up">
               <div className="w-2 h-2 bg-cyan-400 rounded-full animate-pulse" />
-              <span className="text-sm font-medium text-cyan-300">Intelligent Business Automation Platform</span>
+              <span className="text-sm font-medium text-cyan-300">Intelligent business automation</span>
               <div className="w-2 h-2 bg-pink-400 rounded-full animate-pulse" />
             </div>
 
             {/* Main Headline */}
             <h1 className="premium-heading text-5xl md:text-7xl lg:text-8xl text-balance leading-tight mb-8 text-white animate-fade-in-up" style={{animationDelay: '0.2s'}}>
+              
               <span className="text-gradient">
-                AI Voice Agents
+                Prism AI Consultancy
               </span>
-              {" "}for Every Business Need
+              {" "}
             </h1>
 
             {/* Subheadline */}
@@ -156,71 +157,7 @@ export default function HomePage() {
               </Button>
             </div>
 
-            {/* Hero Images Showcase */}
-            <div className="mb-20 animate-fade-in-up" style={{animationDelay: '0.9s'}}>
-              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 max-w-6xl mx-auto">
-                <TiltedCard
-                  imageSrc="/placeholder.jpg"
-                  altText="AI Receptionist handling calls"
-                  captionText="Receptionist - 24/7 call handling"
-                  containerHeight="250px"
-                  containerWidth="100%"
-                  scaleOnHover={1.05}
-                  overlayContent={
-                    <div className="absolute bottom-4 left-4 text-white">
-                      <h4 className="font-semibold">Receptionist</h4>
-                      <p className="text-sm text-gray-200">24/7 call handling</p>
-                    </div>
-                  }
-                  displayOverlayContent={true}
-                />
-                <TiltedCard
-                  imageSrc="/placeholder-user.jpg"
-                  altText="Customer service AI agent"
-                  captionText="Customer Service - Intelligent support"
-                  containerHeight="250px"
-                  containerWidth="100%"
-                  scaleOnHover={1.05}
-                  overlayContent={
-                    <div className="absolute bottom-4 left-4 text-white">
-                      <h4 className="font-semibold">Customer Service</h4>
-                      <p className="text-sm text-gray-200">Intelligent support</p>
-                    </div>
-                  }
-                  displayOverlayContent={true}
-                />
-                <TiltedCard
-                  imageSrc="/placeholder.svg"
-                  altText="Chatbot interface"
-                  captionText="Chatbots - Multi-channel conversations"
-                  containerHeight="250px"
-                  containerWidth="100%"
-                  scaleOnHover={1.05}
-                  overlayContent={
-                    <div className="absolute bottom-4 left-4 text-white">
-                      <h4 className="font-semibold">Chatbots</h4>
-                      <p className="text-sm text-gray-200">Multi-channel conversations</p>
-                    </div>
-                  }
-                  displayOverlayContent={true}
-                />
-                <TiltedCard
-                  imageSrc="/placeholder-user.jpg"
-                  altText="Voice analytics and insights"
-                  captionText="Voice Analytics - AI-powered insights"
-                  containerHeight="250px"
-                  containerWidth="100%"
-                  scaleOnHover={1.05}
-                  overlayContent={
-                    <div className="absolute bottom-4 left-4 text-white">
-                      <h4 className="font-semibold">Voice Analytics</h4>
-                      <p className="text-sm text-gray-200">AI-powered insights</p>
-                    </div>
-                  }
-                  displayOverlayContent={true}
-                />
-                </div>
-                </div>
+            
 
             {/* Key Features */}
             <div className="mt-20 animate-fade-in-up" style={{animationDelay: '1s'}}>
@@ -481,133 +418,7 @@ export default function HomePage() {
 
 
 
-      {/* Final CTA Section - Hormozi Style */}
-      <section className="py-20 bg-gradient-to-r from-green-900/20 via-green-800/20 to-cyan-900/20">
-        <div className="container mx-auto px-4 sm:px-6 lg:px-8 text-center">
-          <h2 className="text-3xl md:text-5xl font-bold mb-6 text-white">Secure Your AI Receptionist Investment</h2>
-          <p className="text-xl text-gray-300 mb-8 max-w-4xl mx-auto">
-            While your competitors keep losing $500K+ annually to missed opportunities, you could be generating $2M+ in new revenue. But this offer expires Jan 31st.
-          </p>
-          
-          <div className="bg-red-900/30 border border-red-500/50 rounded-lg p-6 max-w-2xl mx-auto mb-8">
-            <div className="text-red-400 font-bold text-xl mb-2">⚠️ WARNING: Price Increases to $4,997 in:</div>
-            <div className="text-red-300 text-lg font-semibold">Limited spots at $4,000 upfront + $1,000/month retainer</div>
-            <div className="text-red-200 text-sm mt-2">Limited time offer for new pricing structure</div>
-          </div>
-          
-          <div className="flex flex-col sm:flex-row gap-6 justify-center mb-12">
-            <Button
-              size="lg"
-              className="text-xl px-12 py-6 h-auto bg-gradient-to-r from-green-500 to-green-600 hover:from-green-600 hover:to-green-700 text-white shadow-lg hover:shadow-xl transition-all duration-300 transform hover:scale-105 group pulse"
-              asChild
-            >
-              <Link href="/demo">
-                <Calendar className="mr-3 h-6 w-6 group-hover:rotate-12 transition-transform" />
-                🚀 SECURE YOUR AI RECEPTIONIST NOW
-                <ArrowRight className="ml-3 h-6 w-6 group-hover:translate-x-1 transition-transform" />
-              </Link>
-            </Button>
-            
-            <Button
-              variant="outline"
-              size="lg"
-              className="text-lg px-8 py-6 h-auto border-2 border-cyan-500 text-cyan-400 hover:bg-cyan-500 hover:text-white shadow-lg hover:shadow-xl transition-all duration-300 transform hover:scale-105 group"
-              asChild
-            >
-              <Link href="/features">
-                <Target className="mr-3 h-5 w-5 group-hover:scale-110 transition-transform" />
-                See $47M+ Success Stories
-              </Link>
-            </Button>
-          </div>
-
-          <div className="grid md:grid-cols-3 gap-8 max-w-4xl mx-auto mb-12">
-            <div className="text-center">
-              <div className="text-3xl font-bold text-green-400 mb-2">90 Days</div>
-              <div className="text-gray-300">Revenue Guarantee</div>
-              <div className="text-sm text-gray-400 mt-1">Generate $10K+ or we work for FREE</div>
-            </div>
-            <div className="text-center">
-              <div className="text-3xl font-bold text-cyan-400 mb-2">48 Hours</div>
-              <div className="text-gray-300">Complete Setup</div>
-              <div className="text-sm text-gray-400 mt-1">Done-for-you implementation</div>
-            </div>
-            <div className="text-center">
-              <div className="text-3xl font-bold text-pink-400 mb-2">847%</div>
-              <div className="text-gray-300">Average ROI</div>
-              <div className="text-sm text-gray-400 mt-1">Clients see $8.47 for every $1 invested</div>
-            </div>
-          </div>
-
-          {/* Contact Form */}
-          <div id="contact" className="max-w-2xl mx-auto mt-16">
-            <Card className="border-2 border-green-500/30 bg-gray-800/50">
-              <CardHeader className="text-center">
-                <CardTitle className="text-2xl text-white">Claim Your AI Receptionist</CardTitle>
-                <CardDescription className="text-gray-300">
-                  Fill out the form below and we'll have your AI Receptionist set up within 48 hours
-                </CardDescription>
-              </CardHeader>
-              <CardContent>
-                <form className="space-y-4">
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                    <div>
-                      <label className="text-sm font-medium text-white">Full Name *</label>
-                      <input className="w-full mt-1 px-3 py-2 border border-gray-600 bg-gray-800 text-white rounded-md focus:border-green-500" type="text" placeholder="Your full name" />
-                    </div>
-                    <div>
-                      <label className="text-sm font-medium text-white">Company *</label>
-                      <input className="w-full mt-1 px-3 py-2 border border-gray-600 bg-gray-800 text-white rounded-md focus:border-green-500" type="text" placeholder="Company name" />
-                    </div>
-                  </div>
-                  
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                    <div>
-                      <label className="text-sm font-medium text-white">Business Email *</label>
-                      <input className="w-full mt-1 px-3 py-2 border border-gray-600 bg-gray-800 text-white rounded-md focus:border-green-500" type="email" placeholder="you@company.com" />
-                    </div>
-                    <div>
-                      <label className="text-sm font-medium text-white">Phone *</label>
-                      <input className="w-full mt-1 px-3 py-2 border border-gray-600 bg-gray-800 text-white rounded-md focus:border-green-500" type="tel" placeholder="(555) 123-4567" />
-                    </div>
-                  </div>
-                  
-                  <div>
-                    <label className="text-sm font-medium text-white">Current Monthly Revenue</label>
-                    <select className="w-full mt-1 px-3 py-2 border border-gray-600 bg-gray-800 text-white rounded-md focus:border-green-500">
-                      <option>Select revenue range</option>
-                      <option>$10K - $50K/month</option>
-                      <option>$50K - $100K/month</option>
-                      <option>$100K - $500K/month</option>
-                      <option>$500K+ /month</option>
-                    </select>
-                  </div>
-                  
-                  <div>
-                    <label className="text-sm font-medium text-white">Biggest Revenue Challenge</label>
-                    <textarea className="w-full mt-1 px-3 py-2 border border-gray-600 bg-gray-800 text-white rounded-md focus:border-green-500" rows={3} placeholder="What's costing you the most revenue right now?"></textarea>
-                  </div>
-                  
-                  <Button className="w-full bg-green-600 hover:bg-green-700 text-white pulse" size="lg">
-                    🚀 GET MY AI RECEPTIONIST FOR $4,000 UPFRONT + $1,000/MONTH
-                  </Button>
-                </form>
-                
-                <p className="text-xs text-gray-400 mt-4 text-center">
-                  🔒 Your information is 100% secure. We'll call you within 2 hours to set up your AI Receptionist.
-                </p>
-              </CardContent>
-            </Card>
-          </div>
-
-          <div className="mt-12 text-center">
-            <div className="inline-flex items-center gap-2 bg-yellow-500/20 text-yellow-300 px-6 py-3 rounded-full text-sm border border-yellow-500/30">
-              <Clock className="h-4 w-4" />
-              <span>Limited Time: Secure $4,000 upfront + $1,000/month retainer</span>
-            </div>
-          </div>
-        </div>
-      </section>
+    
 
       {/* Footer - Premium Design */}
       <footer className="relative overflow-hidden" style={{backgroundColor: '#0B0B0D'}}>

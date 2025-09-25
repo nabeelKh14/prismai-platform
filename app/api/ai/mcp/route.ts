@@ -6,7 +6,7 @@
 import { type NextRequest, NextResponse } from "next/server"
 import { createClient } from "@/lib/supabase/server"
 import { z } from "zod"
-import { withErrorHandling, ValidationError, AuthenticationError } from "@/lib/errors"
+import { withErrorHandling, AuthenticationError } from "@/lib/errors"
 import { mcpLeadEnhancer } from "@/lib/mcp/lead-enhancer"
 import { mcpClient } from "@/lib/mcp/client"
 
@@ -58,7 +58,7 @@ export const POST = withErrorHandling(async (request: NextRequest) => {
 })
 
 // Get MCP service status
-export const GET = withErrorHandling(async (request: NextRequest) => {
+export const GET = withErrorHandling(async (_request: NextRequest) => {
   const supabase = await createClient()
   const {
     data: { user },
@@ -180,7 +180,7 @@ async function handleLeadAnalysis(supabase: any, user: any, body: any) {
   }
 }
 
-async function handleMCPStatus(supabase: any, user: any, body: any) {
+async function handleMCPStatus(_supabase: any, _user: any, _body: any) {
   try {
     const status = await mcpLeadEnhancer.getServiceStatus()
     const connectedServices = mcpClient.getConnectedServers()
@@ -220,9 +220,9 @@ function generateInsights(analysis: any): string[] {
   }
 
   // Company insights
-  if (analysis.marketIntelligence?.companyInfo) {
-    const company = analysis.marketIntelligence.companyInfo
-    insights.push(`📚 Company has established presence (Wikipedia entry found)`)
+  if (analysis.marketIntelligence?.sentiment) {
+    const sentiment = analysis.marketIntelligence.sentiment
+    insights.push(`📈 Industry sentiment: ${sentiment.sentiment} (avg score: ${sentiment.avgScore})`)
   }
 
   // Technical insights

@@ -1,4 +1,4 @@
-// ElevenLabs Agents Client (formerly VAPI) for frontend integration
+// VAPI Client for frontend integration
 export interface VAPIConfig {
   apiKey: string
   assistantId?: string
@@ -14,7 +14,7 @@ export interface CallStatus {
 
 export class VAPIClient {
   private apiKey: string
-  private baseUrl = "https://api.elevenlabs.io/v1"
+  private baseUrl = "https://api.vapi.ai"
 
   constructor(config: VAPIConfig) {
     this.apiKey = config.apiKey
@@ -23,6 +23,7 @@ export class VAPIClient {
   async createAssistant(config: {
     name: string
     systemMessage: string
+    firstMessage?: string
     voice?: {
       provider: string
       voiceId: string
@@ -33,30 +34,34 @@ export class VAPIClient {
       temperature: number
     }
   }) {
-    const response = await fetch(`${this.baseUrl}/convai/agents/create`, {
+    const response = await fetch(`${this.baseUrl}/assistant`, {
       method: "POST",
       headers: {
-        "xi-api-key": this.apiKey,
+        "Authorization": `Bearer ${this.apiKey}`,
         "Content-Type": "application/json",
       },
       body: JSON.stringify({
         name: config.name,
-        conversation_config: {
-          agent: {
-            prompt: {
-              prompt: config.systemMessage,
+        model: {
+          provider: config.model?.provider || "openai",
+          model: config.model?.model || "gpt-3.5-turbo",
+          temperature: config.model?.temperature || 0.7,
+          messages: [
+            {
+              role: "system",
+              content: config.systemMessage,
             },
-            first_message: "Hello! Thank you for calling. How can I assist you today?",
-            language: "en",
-          },
-          tts: {
-            voice_id: config.voice?.voiceId || "21m00Tcm4TlvDq8ikWAM",
-            stability: 0.5,
-            similarity_boost: 0.8,
-          },
+          ],
         },
-        platform_integration: {
-          type: "twilio",
+        voice: {
+          provider: config.voice?.provider || "11labs",
+          voiceId: config.voice?.voiceId || "21m00Tcm4TlvDq8ikWAM",
+        },
+        firstMessage: config.firstMessage || "Hello! Thank you for calling. How can I assist you today?",
+        transcriber: {
+          provider: "deepgram",
+          model: "nova-2",
+          language: "en",
         },
       }),
     })
@@ -66,24 +71,25 @@ export class VAPIClient {
     }
 
     const data = await response.json()
-    // Return in VAPI-compatible format
     return {
-      id: data.agent_id,
-      name: config.name,
+      id: data.id,
+      name: data.name,
       ...data,
     }
   }
 
   async makeCall(phoneNumber: string, assistantId: string) {
-    const response = await fetch(`${this.baseUrl}/convai/conversations`, {
+    const response = await fetch(`${this.baseUrl}/call`, {
       method: "POST",
       headers: {
-        "xi-api-key": this.apiKey,
+        "Authorization": `Bearer ${this.apiKey}`,
         "Content-Type": "application/json",
       },
       body: JSON.stringify({
-        agent_id: assistantId,
-        phone_number: phoneNumber,
+        assistantId: assistantId,
+        customer: {
+          number: phoneNumber,
+        },
       }),
     })
 
@@ -92,18 +98,17 @@ export class VAPIClient {
     }
 
     const data = await response.json()
-    // Return in VAPI-compatible format
     return {
-      id: data.conversation_id,
+      id: data.id,
       status: "ringing",
       ...data,
     }
   }
 
   async getCallStatus(callId: string): Promise<CallStatus> {
-    const response = await fetch(`${this.baseUrl}/convai/conversations/${callId}`, {
+    const response = await fetch(`${this.baseUrl}/call/${callId}`, {
       headers: {
-        "xi-api-key": this.apiKey,
+        "Authorization": `Bearer ${this.apiKey}`,
       },
     })
 
@@ -114,33 +119,33 @@ export class VAPIClient {
     const data = await response.json()
 
     return {
-      id: data.conversation_id,
+      id: data.id,
       status: this.mapStatus(data.status),
-      duration: data.duration_ms ? Math.floor(data.duration_ms / 1000) : undefined,
-      transcript: data.transcript,
+      duration: data.duration || (data.startedAt && data.endedAt ? Math.floor((new Date(data.endedAt).getTime() - new Date(data.startedAt).getTime()) / 1000) : undefined),
+      transcript: data.transcript || data.summary,
     }
   }
 
   // WebSocket connection for real-time call updates
   connectToCallUpdates(callId: string, onUpdate: (update: any) => void) {
-    const ws = new WebSocket(`wss://api.elevenlabs.io/v1/convai/conversations/${callId}/websocket`)
+    const ws = new WebSocket(`wss://api.vapi.ai/call/${callId}`)
 
     ws.onopen = () => {
       ws.send(JSON.stringify({
         type: "auth",
-        api_key: this.apiKey,
+        token: this.apiKey,
       }))
     }
 
     ws.onmessage = (event) => {
       const update = JSON.parse(event.data)
-      // Map ElevenLabs events to VAPI-compatible format
+      // Map VAPI events to compatible format
       const vapiUpdate = this.mapUpdate(update)
       onUpdate(vapiUpdate)
     }
 
     ws.onerror = (error) => {
-      console.error("ElevenLabs WebSocket error:", error)
+      console.error("VAPI WebSocket error:", error)
     }
 
     return ws
@@ -148,13 +153,15 @@ export class VAPIClient {
 
   private mapStatus(status: string): CallStatus["status"] {
     switch (status) {
-      case "connecting":
+      case "queued":
+      case "ringing":
         return "ringing"
-      case "connected":
+      case "in-progress":
         return "in-progress"
       case "ended":
         return "ended"
       case "error":
+      case "failed":
         return "failed"
       default:
         return "ringing"
@@ -162,17 +169,22 @@ export class VAPIClient {
   }
 
   private mapUpdate(update: any) {
-    // Map ElevenLabs update format to VAPI format
+    // Map VAPI update format
     if (update.type === "transcript") {
       return {
         type: "transcript",
         role: update.role,
-        text: update.text,
+        text: update.transcript,
       }
-    } else if (update.type === "status") {
+    } else if (update.type === "call.ended") {
       return {
         type: "status-update",
-        status: this.mapStatus(update.status),
+        status: "ended",
+      }
+    } else if (update.type === "call.started") {
+      return {
+        type: "status-update",
+        status: "in-progress",
       }
     }
     return update
