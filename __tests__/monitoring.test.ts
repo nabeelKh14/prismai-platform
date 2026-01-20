@@ -1,3 +1,33 @@
+jest.mock('next/server', () => ({
+  NextRequest: jest.fn(),
+  NextResponse: {
+    json: jest.fn().mockImplementation((body: any, init?: any) => ({
+      status: init?.status || 200,
+      statusText: 'OK',
+      headers: new Map(),
+      body,
+      json: jest.fn().mockImplementation(() => body),
+    })),
+    next: jest.fn(),
+    redirect: jest.fn(),
+  },
+}))
+jest.mock('next/server', () => ({
+  NextRequest: jest.fn(),
+  NextResponse: {
+    json: jest.fn().mockImplementation((body, init) => ({
+      status: init?.status || 200,
+      statusText: 'OK',
+      headers: new Map(),
+      body,
+      json: jest.fn().mockImplementation(() => body),
+      ...init,
+    })),
+    next: jest.fn(),
+    redirect: jest.fn(),
+  },
+}))
+
 import { describe, it, expect, jest, beforeEach, afterEach } from '@jest/globals'
 import { performanceMonitor } from '@/lib/monitoring/performance-monitor'
 import { alertingSystem } from '@/lib/monitoring/alerting-system'
@@ -79,20 +109,6 @@ describe('Monitoring System Tests', () => {
       expect(metric.execution_time_ms).toBe(25)
     })
 
-    it('should record system metrics', async () => {
-      const metric = {
-        memory_usage_mb: 512,
-        memory_total_mb: 1024,
-        cpu_usage_percent: 45,
-        active_connections: 25,
-        timestamp: new Date().toISOString()
-      }
-
-      await performanceMonitor.recordSystemMetric(metric)
-
-      expect(metric.memory_usage_mb).toBe(512)
-      expect(metric.cpu_usage_percent).toBe(45)
-    })
 
     it('should get aggregated stats', async () => {
       const stats = await performanceMonitor.getAggregatedStats('api_response', '24h')

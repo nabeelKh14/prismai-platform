@@ -19,7 +19,7 @@ export async function GET(request: NextRequest) {
     const { searchParams } = new URL(request.url)
     const type = searchParams.get('type') || 'all'
 
-    let result: any = {}
+    const result: any = {}
 
     if (type === 'database' || type === 'all') {
       result.database = await listDatabaseBackups()

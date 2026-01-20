@@ -170,7 +170,7 @@ Guidelines:
     const content = `${knowledgeItem.title} ${knowledgeItem.content}`.toLowerCase()
     
     let score = 0
-    let totalWords = queryWords.length
+    const totalWords = queryWords.length
     
     queryWords.forEach(word => {
       if (content.includes(word)) {

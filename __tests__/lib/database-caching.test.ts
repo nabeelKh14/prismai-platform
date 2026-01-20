@@ -1,3 +1,33 @@
+jest.mock('next/server', () => ({
+  NextRequest: jest.fn(),
+  NextResponse: {
+    json: jest.fn().mockImplementation((body: any, init?: any) => ({
+      status: init?.status || 200,
+      statusText: 'OK',
+      headers: new Map(),
+      body,
+      json: jest.fn().mockImplementation(() => body),
+    })),
+    next: jest.fn(),
+    redirect: jest.fn(),
+  },
+}))
+jest.mock('next/server', () => ({
+  NextRequest: jest.fn(),
+  NextResponse: {
+    json: jest.fn().mockImplementation((body, init) => ({
+      status: init?.status || 200,
+      statusText: 'OK',
+      headers: new Map(),
+      body,
+      json: jest.fn().mockImplementation(() => body),
+      ...init,
+    })),
+    next: jest.fn(),
+    redirect: jest.fn(),
+  },
+}))
+
 /**
  * Database and Caching Components Tests
  * Comprehensive tests for database optimization, caching, and data integrity

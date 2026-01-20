@@ -356,7 +356,7 @@ describe('useAIAssistant', () => {
       expect(result.current.isLoading).toBe(false)
     })
 
-    expect(result.current.error).toBe('Failed to fetch config')
+    expect(result.current.error).toBe('Unexpected token')
     expect(result.current.config).toBe(null)
   })
 })

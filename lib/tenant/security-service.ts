@@ -766,8 +766,8 @@ export class TenantSecurityService {
   }> {
     const securityMeasures: string[] = []
     let requiresEncryption = false
-    let requiresAuditLogging = true // Always required for international transfers
-    let requiresAccessControls = true // Always required for international transfers
+    const requiresAuditLogging = true // Always required for international transfers
+    const requiresAccessControls = true // Always required for international transfers
     let requiresDataMinimization = false
 
     try {

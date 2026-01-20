@@ -19,8 +19,8 @@ export async function GET(request: NextRequest) {
     // Get aggregated performance statistics
     const apiStats = await performanceMonitor.getAggregatedStats('api_response', timeRange as any)
     const dbStats = await performanceMonitor.getAggregatedStats('database_query', timeRange as any)
-    const memoryStats = await performanceMonitor.getAggregatedStats('memory_usage', timeRange as any)
-    const cpuStats = await performanceMonitor.getAggregatedStats('cpu_usage', timeRange as any)
+    const memoryStats = await performanceMonitor.getAggregatedStats('gc_metrics', timeRange as any)
+    const cpuStats = await performanceMonitor.getAggregatedStats('load_average', timeRange as any)
 
     // Get recent performance metrics
     const recentMetrics = await performanceMonitor.getMetrics(

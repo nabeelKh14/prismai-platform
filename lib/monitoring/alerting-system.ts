@@ -341,8 +341,8 @@ export class AlertingSystem {
     try {
       // Get performance metrics
       const apiStats = await performanceMonitor.getAggregatedStats('api_response', '1h')
-      const memoryStats = await performanceMonitor.getAggregatedStats('memory_usage', '1h')
-      const cpuStats = await performanceMonitor.getAggregatedStats('cpu_usage', '1h')
+      const memoryStats = await performanceMonitor.getAggregatedStats('gc_metrics', '1h')
+      const cpuStats = await performanceMonitor.getAggregatedStats('load_average', '1h')
 
       // Get auth metrics
       const authMetrics = await AuthMonitor.getAuthMetrics('hour')

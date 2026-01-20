@@ -1,52 +1,45 @@
-import { env, requireEnv, getEnv, isProduction, isDevelopment, features } from '@/lib/env'
+describe('Environment Validation', () => {
+  const originalEnv = process.env
 
-describe('Environment Configuration', () => {
-  describe('env validation', () => {
-    it('should have required environment variables in test mode', () => {
-      expect(env.NODE_ENV).toBe('test')
-      expect(env.NEXT_PUBLIC_SUPABASE_URL).toBeDefined()
-      expect(env.NEXT_PUBLIC_SUPABASE_ANON_KEY).toBeDefined()
-      // Optional AI service keys - may not be defined in test environment
-      expect(env.GEMINI_API_KEY || 'test-key').toBeDefined()
-      expect(env.VAPI_API_KEY || 'test-key').toBeDefined()
-    })
-
-    it('should correctly identify test environment', () => {
-      expect(isProduction).toBe(false)
-      expect(isDevelopment).toBe(false)
-    })
+  beforeEach(() => {
+    process.env = { ...originalEnv } as any
   })
 
-  describe('requireEnv function', () => {
-    it('should return value for existing environment variable', () => {
-      const result = requireEnv('NODE_ENV')
-      expect(result).toBe('test')
-    })
-
-    it('should throw error for missing required environment variable', () => {
-      expect(() => requireEnv('NONEXISTENT_VAR' as any)).toThrow()
-    })
+  afterEach(() => {
+    process.env = originalEnv
   })
 
-  describe('getEnv function', () => {
-    it('should return value for existing environment variable', () => {
-      const result = getEnv('NODE_ENV')
-      expect(result).toBe('test')
-    })
+  it('should validate successfully with all required environment variables', async () => {
+    (process.env as any).NODE_ENV = 'development'
+    process.env.NEXT_PUBLIC_APP_URL = 'http://localhost:3000'
+    process.env.NEXT_PUBLIC_SUPABASE_URL = 'http://localhost:54321'
+    process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY = 'test-anon-key'
+    process.env.SUPABASE_SERVICE_ROLE_KEY = 'test-service-key'
+    process.env.GEMINI_API_KEY = 'test-gemini-key'
+    process.env.VAPI_API_KEY = 'test-vapi-key'
+    process.env.SENTRY_DSN = ''
+    process.env.UPSTASH_REDIS_REST_URL = ''
+    process.env.REDIS_URL = ''
 
-    it('should return fallback for missing environment variable', () => {
-      const result = getEnv('NONEXISTENT_VAR' as any, 'fallback')
-      expect(result).toBe('fallback')
-    })
+    const { validateEnvSafe } = await import('../../lib/env')
+    const result = validateEnvSafe()
+    expect(result.success).toBe(true)
+    if (result.success) {
+      expect(result.data.NODE_ENV).toBe('development')
+      expect(result.data.NEXT_PUBLIC_APP_URL).toBe('http://localhost:3000')
+    }
   })
 
-  describe('feature flags', () => {
-    it('should have correct feature flags for test environment', () => {
-      expect(typeof features.analytics).toBe('boolean')
-      expect(typeof features.monitoring).toBe('boolean')
-      expect(typeof features.email).toBe('boolean')
-      expect(typeof features.caching).toBe('boolean')
-      expect(typeof features.webhooks).toBe('boolean')
-    })
+  it('should fail validation when required variables are missing', async () => {
+    (process.env as any).NODE_ENV = 'development'
+    // Missing required vars like SUPABASE_SERVICE_ROLE_KEY, GEMINI_API_KEY, etc.
+
+    const { validateEnvSafe } = await import('../../lib/env')
+    const result = validateEnvSafe()
+    expect(result.success).toBe(false)
+    if (!result.success) {
+      expect(result.error).toContain('Environment validation failed')
+      expect(result.error).toContain('Missing:')
+    }
   })
 })

@@ -8,6 +8,7 @@ import { ScrollArea } from "@/components/ui/scroll-area"
 import { Avatar, AvatarFallback } from "@/components/ui/avatar"
 import { Mic, MessageSquare, Play, Pause, Volume2, Clock, Zap } from "lucide-react"
 import { cn } from "@/lib/utils"
+import { sanitizeHtml } from "@/lib/phi/sanitizer"
 import type { Message } from "@/hooks/use-conversation"
 
 interface ConversationDisplayProps {
@@ -28,6 +29,17 @@ export function ConversationDisplay({ messages, isLoading }: ConversationDisplay
       }
     }
   }, [messages])
+
+  // Cleanup audio elements on unmount
+  useEffect(() => {
+    return () => {
+      audioRefs.current.forEach((audio) => {
+        audio.pause()
+        audio.src = ''
+      })
+      audioRefs.current.clear()
+    }
+  }, [])
 
   const formatTime = (timestamp: string) => {
     return new Date(timestamp).toLocaleTimeString([], {
@@ -108,7 +120,7 @@ export function ConversationDisplay({ messages, isLoading }: ConversationDisplay
           </Button>
           {message.content && (
             <div className="text-sm text-gray-600 italic">
-              "{message.content}"
+              "{sanitizeHtml(message.content)}"
             </div>
           )}
         </div>
@@ -117,7 +129,7 @@ export function ConversationDisplay({ messages, isLoading }: ConversationDisplay
 
     return (
       <div className="prose prose-sm max-w-none">
-        {message.content}
+        <span dangerouslySetInnerHTML={{ __html: sanitizeHtml(message.content) }} />
       </div>
     )
   }

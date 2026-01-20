@@ -1,3 +1,19 @@
+jest.mock('next/server', () => ({
+  NextRequest: jest.fn(),
+  NextResponse: {
+    json: jest.fn().mockImplementation((body, init) => ({
+      status: init?.status || 200,
+      statusText: 'OK',
+      headers: new Map(),
+      body,
+      json: jest.fn().mockImplementation(() => body),
+      ...init,
+    })),
+    next: jest.fn(),
+    redirect: jest.fn(),
+  },
+}))
+
 import { sanitizeString, sanitizeEmail, securitySchemas, CSRFProtection } from '@/lib/security'
 
 describe('Security Utilities', () => {

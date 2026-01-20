@@ -38,8 +38,10 @@ export const metadata: Metadata = {
     description:
       "Refract your business potential through AI with comprehensive automation, intelligent customer service, and seamless integrations.",
   },
-    generator: 'v0.app'
+  generator: 'v0.app'
 }
+
+import { Navbar } from "@/components/Navbar"
 
 export default function RootLayout({
   children,
@@ -49,6 +51,7 @@ export default function RootLayout({
   return (
     <html lang="en" className={`${inter.className} antialiased`}>
       <body className="font-sans">
+        <Navbar />
         {children}
         <Analytics />
       </body>

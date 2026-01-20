@@ -120,14 +120,18 @@ jest.mock('@/lib/supabase/client', () => ({
 // Mock NextResponse
 jest.mock('next/server', () => ({
   NextRequest: jest.fn(),
-  NextResponse: jest.fn().mockImplementation((body, init) => ({
-    status: init?.status || 200,
-    statusText: 'OK',
-    headers: new Map(),
-    body,
-    json: jest.fn().mockImplementation(() => body),
-    ...init,
-  })),
+  NextResponse: {
+    json: jest.fn().mockImplementation((body, init) => ({
+      status: init?.status || 200,
+      statusText: 'OK',
+      headers: new Map(),
+      body,
+      json: jest.fn().mockImplementation(() => body),
+      ...init,
+    })),
+    next: jest.fn(),
+    redirect: jest.fn(),
+  },
 }))
 
 // Setup cleanup after each test

@@ -234,9 +234,6 @@ export class ResourceMonitor extends EventEmitter {
       // Check thresholds and emit alerts
       await this.checkThresholds(usage)
 
-      // Record performance metrics
-      await this.recordPerformanceMetrics(usage)
-
     } catch (error) {
       logger.error('Failed to collect resource usage', { error })
     }
@@ -452,36 +449,6 @@ export class ResourceMonitor extends EventEmitter {
     })
   }
 
-  private async recordPerformanceMetrics(usage: ResourceUsage): Promise<void> {
-    const timestamp = usage.timestamp
-
-    // Record system metrics
-    await performanceMonitor.recordSystemMetric({
-      memory_usage_mb: usage.memory.used / (1024 * 1024),
-      memory_total_mb: usage.memory.total / (1024 * 1024),
-      cpu_usage_percent: usage.cpu.usage,
-      active_connections: usage.network.activeConnections,
-      timestamp
-    })
-
-    // Record load average
-    await performanceMonitor.recordLoadAverageMetric(
-      usage.cpu.loadAverage[0],
-      usage.cpu.loadAverage[1],
-      usage.cpu.loadAverage[2],
-      timestamp
-    )
-
-    // Record uptime
-    await performanceMonitor.recordUptimeMetric(usage.process.uptime, timestamp)
-
-    // Record thread count (simplified)
-    await performanceMonitor.recordThreadCountMetric(
-      usage.process.threads || 1,
-      usage.process.threads || 1,
-      timestamp
-    )
-  }
 
   private calculateTrend(recent: number[], older: number[]): 'increasing' | 'decreasing' | 'stable' {
     if (recent.length === 0 || older.length === 0) return 'stable'

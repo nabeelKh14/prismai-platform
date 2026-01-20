@@ -1,3 +1,10 @@
+jest.mock('@/lib/logger', () => ({
+  info: jest.fn(),
+  warn: jest.fn(),
+  error: jest.fn(),
+  debug: jest.fn(),
+}))
+
 import { describe, it, expect, jest, beforeEach, afterEach } from '@jest/globals'
 import { cache, createCacheKey, memoize, cacheAside, CacheWarmer, TTL } from '@/lib/cache'
 import { logger } from '@/lib/logger'

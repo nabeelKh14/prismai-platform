@@ -1,5 +1,6 @@
 import { NextRequest } from 'next/server'
 import { logger } from '@/lib/logger'
+import { isDevelopment } from '@/lib/env'
 
 export interface RateLimitTier {
   name: 'free' | 'pro' | 'enterprise'
@@ -31,22 +32,22 @@ export class TierManager {
   private static readonly TIERS: Record<string, RateLimitTier> = {
     free: {
       name: 'free',
-      maxRequests: 100,
-      windowMs: 15 * 60 * 1000, // 15 minutes
-      burstLimit: 10,
+      maxRequests: isDevelopment ? 10000 : 100,
+      windowMs: isDevelopment ? 60 * 60 * 1000 : 15 * 60 * 1000, // 1 hour in dev, 15 minutes in prod
+      burstLimit: isDevelopment ? 1000 : 10,
       priority: 1,
       features: {
         analytics: false,
         customLimits: false,
-        bypassAllowed: false,
+        bypassAllowed: isDevelopment, // Allow bypass in development
         monitoring: false
       }
     },
     pro: {
       name: 'pro',
-      maxRequests: 1000,
-      windowMs: 60 * 60 * 1000, // 1 hour
-      burstLimit: 100,
+      maxRequests: isDevelopment ? 50000 : 1000,
+      windowMs: isDevelopment ? 60 * 60 * 1000 : 60 * 60 * 1000, // 1 hour
+      burstLimit: isDevelopment ? 5000 : 100,
       priority: 2,
       features: {
         analytics: true,
@@ -57,9 +58,9 @@ export class TierManager {
     },
     enterprise: {
       name: 'enterprise',
-      maxRequests: 10000,
-      windowMs: 60 * 60 * 1000, // 1 hour
-      burstLimit: 1000,
+      maxRequests: isDevelopment ? 100000 : 10000,
+      windowMs: isDevelopment ? 60 * 60 * 1000 : 60 * 60 * 1000, // 1 hour
+      burstLimit: isDevelopment ? 10000 : 1000,
       priority: 3,
       features: {
         analytics: true,
@@ -93,21 +94,27 @@ export class TierManager {
     let customLimits: UserTierInfo['customLimits']
     let bypassEnabled = false
 
-    if (userId) {
-      // Check user's subscription tier from database
-      const userTierInfo = await this.getUserTierFromDatabase(userId)
-      if (userTierInfo) {
-        tier = userTierInfo.tier
-        customLimits = userTierInfo.customLimits
-        bypassEnabled = userTierInfo.bypassEnabled
-      }
-    } else if (apiKey) {
-      // Check API key tier
-      const apiKeyTierInfo = await this.getApiKeyTier(apiKey)
-      if (apiKeyTierInfo) {
-        tier = apiKeyTierInfo.tier
-        customLimits = apiKeyTierInfo.customLimits
-        bypassEnabled = apiKeyTierInfo.bypassEnabled
+    if (isDevelopment) {
+      // In development, use enterprise tier with bypass enabled
+      tier = this.TIERS.enterprise
+      bypassEnabled = true
+    } else {
+      if (userId) {
+        // Check user's subscription tier from database
+        const userTierInfo = await this.getUserTierFromDatabase(userId)
+        if (userTierInfo) {
+          tier = userTierInfo.tier
+          customLimits = userTierInfo.customLimits
+          bypassEnabled = userTierInfo.bypassEnabled
+        }
+      } else if (apiKey) {
+        // Check API key tier
+        const apiKeyTierInfo = await this.getApiKeyTier(apiKey)
+        if (apiKeyTierInfo) {
+          tier = apiKeyTierInfo.tier
+          customLimits = apiKeyTierInfo.customLimits
+          bypassEnabled = apiKeyTierInfo.bypassEnabled
+        }
       }
     }
 

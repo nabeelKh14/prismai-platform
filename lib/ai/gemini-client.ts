@@ -45,9 +45,16 @@ export interface EmbeddingResponse {
 class GeminiClient {
   private apiKey: string
   private baseUrl = 'https://generativelanguage.googleapis.com/v1beta'
-  
+
   constructor() {
-    this.apiKey = requireEnv('GEMINI_API_KEY') as string
+    console.log('GeminiClient constructor called')
+    try {
+      this.apiKey = requireEnv('GEMINI_API_KEY') as string
+      console.log('GeminiClient initialized with API key:', !!this.apiKey)
+    } catch (error) {
+      console.warn('GeminiClient: API key not available, client will not function:', (error as Error).message)
+      this.apiKey = ''
+    }
   }
 
   private convertToGeminiMessages(messages: ChatCompletionRequest['messages']): {
@@ -56,7 +63,7 @@ class GeminiClient {
   } {
     const systemMessage = messages.find(m => m.role === 'system')
     const conversationMessages = messages.filter(m => m.role !== 'system')
-    
+
     const contents: GeminiMessage[] = conversationMessages.map(msg => ({
       role: msg.role === 'assistant' ? 'model' : 'user',
       parts: [{ text: msg.content }]
@@ -82,8 +89,10 @@ class GeminiClient {
       totalTokens: number
     }
   }> {
+    console.log('createChatCompletion called with request:', { messages: request.messages.length, model: request.model })
+
     const { systemInstruction, contents } = this.convertToGeminiMessages(request.messages)
-    
+
     const requestBody: any = {
       contents,
       generationConfig: {
@@ -153,6 +162,8 @@ class GeminiClient {
   }
 
   async createEmbedding(request: EmbeddingRequest): Promise<EmbeddingResponse> {
+    console.log('createEmbedding called with request:', { inputLength: request.input.length, model: request.model })
+
     const model = request.model || 'text-embedding-004'
     const url = `${this.baseUrl}/models/${model}:embedContent?key=${this.apiKey}`
 
@@ -208,6 +219,7 @@ class GeminiClient {
     maxTokens?: number
     model?: string
   } = {}) {
+    console.log('chat method called (legacy)')
     return this.createChatCompletion({
       messages,
       ...options
@@ -221,6 +233,8 @@ class GeminiClient {
     topics: string[]
     satisfaction: string
   }> {
+    console.log('analyzeTranscript called with transcript length:', transcript.length)
+
     const response = await this.createChatCompletion({
       messages: [
         {
@@ -231,7 +245,7 @@ class GeminiClient {
             2. Any booking requests with details
             3. Customer satisfaction indicators
             4. Key topics discussed
-            
+
             Return JSON format:
             {
               \"sentiment_score\": float,
@@ -270,6 +284,20 @@ class GeminiClient {
     }
   }
 }
+// Export singleton instance
+// export const geminiClient = new GeminiClient()
+
+// Export for compatibility with existing OpenAI usage
+// export const openai = {
+//   chat: {
+//     completions: {
+//       create: (request: ChatCompletionRequest) => geminiClient.createChatCompletion(request)
+//     }
+//   }
+// }
+
+// Legacy export for existing code
+// export default geminiClient
 
 // Export singleton instance
 export const geminiClient = new GeminiClient()

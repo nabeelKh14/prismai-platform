@@ -89,13 +89,24 @@ export class AbuseDetectionService {
     const url = request.nextUrl.pathname + request.nextUrl.search
     const userAgent = request.headers.get('user-agent') || ''
     const body = request.method === 'POST' ? '' : '' // Would need body parsing
+    const ip = this.getClientIP(request)
+
+    // Skip abuse detection for localhost/development
+    if (ip === 'unknown' || ip === '::1' || ip === '127.0.0.1' || ip.startsWith('192.168.') || ip.startsWith('10.')) {
+      return {
+        isSuspicious: false,
+        riskScore: 0,
+        patterns: [],
+        recommendedAction: 'allow'
+      }
+    }
 
     let riskScore = 0
     const matchedPatterns: AbusePattern[] = []
 
-    // Check URL patterns
+    // Check URL patterns (NOT user agent - user agents commonly contain special chars like &)
     for (const pattern of this.SUSPICIOUS_PATTERNS) {
-      if (pattern.pattern.test(url) || pattern.pattern.test(userAgent)) {
+      if (pattern.pattern.test(url)) {
         matchedPatterns.push(pattern)
         riskScore += this.getSeverityScore(pattern.severity)
       }
@@ -180,7 +191,7 @@ export class AbuseDetectionService {
     try {
       const activity = await cache.get<SuspiciousActivity>(key)
       return activity?.captchaRequired ||
-             (activity?.riskScore || 0) >= this.RISK_THRESHOLDS.medium
+        (activity?.riskScore || 0) >= this.RISK_THRESHOLDS.medium
     } catch {
       return false
     }

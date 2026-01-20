@@ -23,7 +23,7 @@ export interface Conversation extends BaseEntity {
   channel: 'whatsapp' | 'sms' | 'website' | 'email'
   status: 'active' | 'resolved' | 'waiting' | 'assigned' | 'escalated'
   priority?: 'low' | 'medium' | 'high' | 'urgent'
-  metadata?: Record<string, any>
+  metadata?: Record<string, unknown>
 }
 
 export interface Message extends BaseEntity {
@@ -31,7 +31,7 @@ export interface Message extends BaseEntity {
   content: string
   sender_type: 'user' | 'agent' | 'system'
   message_type?: 'text' | 'image' | 'file' | 'location'
-  metadata?: Record<string, any>
+  metadata?: Record<string, unknown>
 }
 
 // Survey types
@@ -82,7 +82,7 @@ export interface SurveyResponse {
   question_id: string
   response_value: string | number | boolean
   response_type: 'text' | 'number' | 'boolean' | 'choice'
-  metadata?: Record<string, any>
+  metadata?: Record<string, unknown>
 }
 
 // Analytics types
@@ -151,7 +151,7 @@ export interface PerformanceMetrics {
 }
 
 // API Response types
-export interface ApiResponse<T = any> {
+export interface ApiResponse<T = unknown> {
   data?: T
   error?: string
   code?: string
@@ -172,7 +172,7 @@ export interface PaginatedResponse<T> extends ApiResponse<T[]> {
 export interface ApiError {
   message: string
   code?: string
-  details?: any
+  details?: unknown
   timestamp: string
   requestId?: string
 }
@@ -196,7 +196,7 @@ export interface FilterParams {
 // Webhook types
 export interface WebhookPayload {
   event: string
-  data: Record<string, any>
+  data: Record<string, unknown>
   timestamp: string
   signature?: string
 }
@@ -227,7 +227,7 @@ export interface Notification {
   message: string
   read: boolean
   created_at: string
-  metadata?: Record<string, any>
+  metadata?: Record<string, unknown>
 }
 
 // Lead types
@@ -240,7 +240,7 @@ export interface Lead {
   source: string
   status: 'new' | 'contacted' | 'qualified' | 'converted' | 'lost'
   score?: number
-  metadata?: Record<string, any>
+  metadata?: Record<string, unknown>
   created_at: string
   updated_at: string
 }
@@ -261,7 +261,7 @@ export interface Campaign {
 
 export interface CampaignAudience {
   total_contacts: number
-  filters?: Record<string, any>
+  filters?: Record<string, unknown>
   segments?: string[]
 }
 

@@ -3,7 +3,7 @@ import { logger } from '@/lib/logger'
 
 export interface PerformanceMetric {
   id: string
-  metric_type: 'api_response' | 'database_query' | 'memory_usage' | 'cpu_usage' | 'cache_hit_rate' | 'error_rate' | 'network_latency' | 'disk_io' | 'throughput' | 'concurrency' | 'response_size' | 'uptime' | 'load_average' | 'gc_metrics' | 'thread_count' | 'connection_pool'
+  metric_type: 'api_response' | 'database_query' | 'cache_hit_rate' | 'error_rate' | 'network_latency' | 'disk_io' | 'throughput' | 'concurrency' | 'response_size' | 'uptime' | 'load_average' | 'gc_metrics' | 'thread_count' | 'connection_pool'
   value: number
   unit: string
   timestamp: string
@@ -29,13 +29,6 @@ export interface DatabaseMetric {
   timestamp: string
 }
 
-export interface SystemMetric {
-  memory_usage_mb: number
-  memory_total_mb: number
-  cpu_usage_percent: number
-  active_connections: number
-  timestamp: string
-}
 
 export class PerformanceMonitor {
   private static instance: PerformanceMonitor
@@ -128,64 +121,6 @@ export class PerformanceMonitor {
     }
   }
 
-  /**
-   * Record system performance metric
-   */
-  async recordSystemMetric(metric: SystemMetric): Promise<void> {
-    try {
-      // Memory usage
-      const memoryMetric: Omit<PerformanceMetric, 'id'> = {
-        metric_type: 'memory_usage',
-        value: metric.memory_usage_mb,
-        unit: 'MB',
-        timestamp: metric.timestamp,
-        metadata: {
-          memory_total_mb: metric.memory_total_mb,
-          memory_usage_percent: (metric.memory_usage_mb / metric.memory_total_mb) * 100
-        },
-        tags: {
-          type: 'usage'
-        }
-      }
-
-      // CPU usage
-      const cpuMetric: Omit<PerformanceMetric, 'id'> = {
-        metric_type: 'cpu_usage',
-        value: metric.cpu_usage_percent,
-        unit: 'percent',
-        timestamp: metric.timestamp,
-        metadata: {
-          active_connections: metric.active_connections
-        },
-        tags: {
-          type: 'usage'
-        }
-      }
-
-      await Promise.all([
-        this.storeMetric(memoryMetric),
-        this.storeMetric(cpuMetric)
-      ])
-
-      // Alert on high resource usage
-      if (metric.memory_usage_mb > 800) { // 800MB threshold
-        logger.warn('High memory usage detected', {
-          memory_usage_mb: metric.memory_usage_mb,
-          memory_total_mb: metric.memory_total_mb
-        })
-      }
-
-      if (metric.cpu_usage_percent > 80) { // 80% threshold
-        logger.warn('High CPU usage detected', {
-          cpu_usage_percent: metric.cpu_usage_percent,
-          active_connections: metric.active_connections
-        })
-      }
-
-    } catch (error) {
-      logger.error('Failed to record system metric', { error, metric })
-    }
-  }
 
   /**
    * Record cache performance metric

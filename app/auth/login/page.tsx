@@ -1,6 +1,6 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useEffect, useRef } from 'react'
 import { useRouter } from 'next/navigation'
 import { useForm } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
@@ -25,9 +25,27 @@ type LoginForm = z.infer<typeof loginSchema>
 
 export default function LoginPage() {
   const [isLoading, setIsLoading] = useState(false)
+  const [isGoogleLoading, setIsGoogleLoading] = useState(false)
   const router = useRouter()
   const { toast } = useToast()
-  const supabase = createClient()
+  const mountedRef = useRef(true)
+
+  // Environment variable validation and Supabase client creation
+  const [supabase, setSupabase] = useState<any>(null)
+  const [envError, setEnvError] = useState<string | null>(null)
+
+  useEffect(() => {
+    try {
+      const client = createClient()
+      setSupabase(client)
+    } catch (error) {
+      setEnvError('Environment configuration error. Please check your setup.')
+    }
+
+    return () => {
+      mountedRef.current = false
+    }
+  }, [])
 
   const form = useForm<LoginForm>({
     resolver: zodResolver(loginSchema),
@@ -38,6 +56,8 @@ export default function LoginPage() {
   })
 
   const onSubmit = async (data: LoginForm) => {
+    if (!supabase || !mountedRef.current) return
+
     setIsLoading(true)
 
     try {
@@ -47,31 +67,49 @@ export default function LoginPage() {
       })
 
       if (error) {
-        toast({
-          title: 'Login Failed',
-          description: error.message,
-          variant: 'destructive',
-        })
+        if (mountedRef.current) {
+          toast({
+            title: 'Login Failed',
+            description: error.message,
+            variant: 'destructive',
+          })
+        }
       } else {
-        toast({
-          title: 'Login Successful',
-          description: 'Welcome back!',
-        })
-        router.push('/dashboard')
+        // Validate authentication state before navigation
+        const { data: session } = await supabase.auth.getSession()
+        if (session?.session && mountedRef.current) {
+          toast({
+            title: 'Login Successful',
+            description: 'Welcome back!',
+          })
+          router.push('/dashboard')
+        } else if (mountedRef.current) {
+          toast({
+            title: 'Authentication Error',
+            description: 'Failed to verify authentication. Please try again.',
+            variant: 'destructive',
+          })
+        }
       }
     } catch (error) {
-      toast({
-        title: 'Error',
-        description: 'An unexpected error occurred. Please try again.',
-        variant: 'destructive',
-      })
+      if (mountedRef.current) {
+        toast({
+          title: 'Error',
+          description: 'An unexpected error occurred. Please try again.',
+          variant: 'destructive',
+        })
+      }
     } finally {
-      setIsLoading(false)
+      if (mountedRef.current) {
+        setIsLoading(false)
+      }
     }
   }
 
   const handleGoogleSignIn = async () => {
-    setIsLoading(true)
+    if (!supabase || !mountedRef.current || typeof window === 'undefined') return
+
+    setIsGoogleLoading(true)
 
     try {
       const { error } = await supabase.auth.signInWithOAuth({
@@ -81,7 +119,7 @@ export default function LoginPage() {
         },
       })
 
-      if (error) {
+      if (error && mountedRef.current) {
         toast({
           title: 'Google Sign In Failed',
           description: error.message,
@@ -89,18 +127,38 @@ export default function LoginPage() {
         })
       }
     } catch (error) {
-      toast({
-        title: 'Error',
-        description: 'An unexpected error occurred. Please try again.',
-        variant: 'destructive',
-      })
+      if (mountedRef.current) {
+        toast({
+          title: 'Error',
+          description: 'An unexpected error occurred. Please try again.',
+          variant: 'destructive',
+        })
+      }
     } finally {
-      setIsLoading(false)
+      if (mountedRef.current) {
+        setIsGoogleLoading(false)
+      }
     }
   }
 
+  // Show environment error if Supabase client couldn't be created
+  if (envError) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-slate-950 px-4">
+        <Card className="w-full max-w-md bg-white/5 backdrop-blur-xl border-white/10 shadow-lg">
+          <CardHeader>
+            <CardTitle className="text-2xl font-bold text-center text-white">Configuration Error</CardTitle>
+            <CardDescription className="text-center text-gray-400">
+              {envError}
+            </CardDescription>
+          </CardHeader>
+        </Card>
+      </div>
+    )
+  }
+
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gray-50 dark:bg-gray-900 px-4">
+    <div className="min-h-screen flex items-center justify-center bg-slate-950 px-4">
       {/* Interactive dot-grid background */}
       <DotGrid
         dotSize={2}
@@ -114,10 +172,15 @@ export default function LoginPage() {
         className="fixed inset-0 z-0"
         style={{ opacity: 0.6 }}
       />
-      <Card className="w-full max-w-md">
+
+      {/* Background Effects */}
+      <div className="absolute inset-0 bg-gradient-to-br from-cyan-500/8 via-transparent to-pink-500/8 opacity-20" />
+      <div className="absolute inset-0 bg-gradient-to-br from-cyan-500/8 via-transparent to-pink-500/8" />
+
+      <Card className="w-full max-w-md bg-white/5 backdrop-blur-xl border-white/10 shadow-lg relative z-10">
         <CardHeader className="space-y-1">
-          <CardTitle className="text-2xl font-bold text-center">Sign In</CardTitle>
-          <CardDescription className="text-center">
+          <CardTitle className="text-2xl font-bold text-center text-white">Sign In</CardTitle>
+          <CardDescription className="text-center text-gray-400">
             Enter your credentials to access your account
           </CardDescription>
         </CardHeader>
@@ -125,20 +188,20 @@ export default function LoginPage() {
           <Button
             type="button"
             variant="outline"
-            className="w-full"
+            className="w-full bg-white/5 backdrop-blur-xl border-white/10 hover:bg-white/10 text-white"
             onClick={handleGoogleSignIn}
-            disabled={isLoading}
+            disabled={isLoading || isGoogleLoading || !supabase}
           >
             <Chrome className="mr-2 h-4 w-4" />
-            {isLoading ? 'Signing In...' : 'Continue with Google'}
+            {isGoogleLoading ? 'Signing In...' : 'Continue with Google'}
           </Button>
 
           <div className="relative my-6">
             <div className="absolute inset-0 flex items-center">
-              <span className="w-full border-t" />
+              <span className="w-full border-t border-white/10" />
             </div>
             <div className="relative flex justify-center text-xs uppercase">
-              <span className="bg-background px-2 text-muted-foreground">Or continue with</span>
+              <span className="bg-slate-950 px-2 text-gray-400">Or continue with</span>
             </div>
           </div>
 
@@ -149,13 +212,14 @@ export default function LoginPage() {
                 name="email"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>Email</FormLabel>
+                    <FormLabel className="text-white">Email</FormLabel>
                     <FormControl>
                       <Input
                         type="email"
                         placeholder="Enter your email"
+                        className="bg-white/5 border-white/10 text-white placeholder:text-gray-400"
                         {...field}
-                        disabled={isLoading}
+                        disabled={isLoading || isGoogleLoading || !supabase}
                       />
                     </FormControl>
                     <FormMessage />
@@ -168,13 +232,14 @@ export default function LoginPage() {
                 name="password"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>Password</FormLabel>
+                    <FormLabel className="text-white">Password</FormLabel>
                     <FormControl>
                       <Input
                         type="password"
                         placeholder="Enter your password"
+                        className="bg-white/5 border-white/10 text-white placeholder:text-gray-400"
                         {...field}
-                        disabled={isLoading}
+                        disabled={isLoading || isGoogleLoading || !supabase}
                       />
                     </FormControl>
                     <FormMessage />
@@ -182,18 +247,18 @@ export default function LoginPage() {
                 )}
               />
 
-              <Button type="submit" className="w-full" disabled={isLoading}>
+              <Button type="submit" className="w-full bg-gradient-to-r from-cyan-400 to-pink-400 hover:from-cyan-500 hover:to-pink-500 text-white shadow-lg" disabled={isLoading || isGoogleLoading || !supabase}>
                 {isLoading ? 'Signing In...' : 'Sign In'}
               </Button>
             </form>
           </Form>
 
           <div className="mt-6 text-center">
-            <p className="text-sm text-gray-600 dark:text-gray-400">
+            <p className="text-sm text-gray-400">
               Don't have an account?{' '}
               <Link
                 href="/auth/sign-up"
-                className="font-medium text-primary hover:underline"
+                className="font-medium text-cyan-400 hover:text-cyan-300 transition-colors"
               >
                 Sign up
               </Link>

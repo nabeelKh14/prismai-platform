@@ -1,3 +1,105 @@
+jest.mock('next/server', () => ({
+  NextRequest: jest.fn(),
+  NextResponse: {
+    json: jest.fn().mockImplementation((body: any, init?: any) => ({
+      status: init?.status || 200,
+      statusText: 'OK',
+      headers: new Map(),
+      body,
+      json: jest.fn().mockImplementation(() => body),
+    })),
+    next: jest.fn(),
+    redirect: jest.fn(),
+  },
+}))
+jest.mock('next/server', () => ({
+  NextRequest: jest.fn(),
+  NextResponse: {
+    json: jest.fn().mockImplementation((body: any, init?: any) => ({
+      status: init?.status || 200,
+      statusText: 'OK',
+      headers: new Map(),
+      body,
+      json: jest.fn().mockImplementation(() => body),
+    })),
+    next: jest.fn(),
+    redirect: jest.fn(),
+  },
+}))
+jest.mock('next/server', () => ({
+  NextRequest: jest.fn(),
+  NextResponse: {
+    json: jest.fn().mockImplementation((body: any, init?: any) => ({
+      status: init?.status || 200,
+      statusText: 'OK',
+      headers: new Map(),
+      body,
+      json: jest.fn().mockImplementation(() => body),
+    })),
+    next: jest.fn(),
+    redirect: jest.fn(),
+  },
+}))
+jest.mock('next/server', () => ({
+  NextRequest: jest.fn(),
+  NextResponse: {
+    json: jest.fn().mockImplementation((body, init) => {
+      const response = {
+        status: 200,
+        statusText: 'OK',
+        headers: new Map(),
+        body,
+        json: jest.fn().mockImplementation(() => body),
+      }
+      if (init && typeof init === 'object') {
+        if (init.status) response.status = init.status
+        Object.assign(response, init)
+      }
+      return response
+    }),
+    next: jest.fn(),
+    redirect: jest.fn(),
+  },
+}))
+jest.mock('next/server', () => ({
+  NextRequest: jest.fn(),
+  NextResponse: {
+    json: jest.fn().mockImplementation((body: any, init?: { status?: number; [key: string]: any }) => ({
+      status: init?.status || 200,
+      statusText: 'OK',
+      headers: new Map(),
+      body,
+      json: jest.fn().mockImplementation(() => body),
+      ...(init || {}),
+    })),
+    next: jest.fn(),
+    redirect: jest.fn(),
+  },
+}))
+jest.mock('next/server', () => ({
+  NextRequest: jest.fn(),
+  json: jest.fn().mockImplementation((body, init) => ({
+    status: init?.status || 200,
+    statusText: 'OK',
+    headers: new Map(),
+    body,
+    json: jest.fn().mockImplementation(() => body),
+    ...(init || {}),
+  })),
+  NextResponse: {
+    json: jest.fn().mockImplementation((body, init) => ({
+      status: init?.status || 200,
+      statusText: 'OK',
+      headers: new Map(),
+      body,
+      json: jest.fn().mockImplementation(() => body),
+      ...init,
+    })),
+    next: jest.fn(),
+    redirect: jest.fn(),
+  },
+}))
+
 /**
  * API Security Middleware Tests
  * Tests for the actual API security middleware implementation

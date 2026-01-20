@@ -35,7 +35,12 @@ logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s - %(
 logger = logging.getLogger(__name__)
 
 # Initialize Rich console
-console = Console()
+try:
+    console = Console()
+    logger.info("Rich console initialized successfully")
+except Exception as e:
+    logger.error(f"Failed to initialize Rich console: {e}")
+    console = None
 
 class AIReceptionistDemo:
     def __init__(self):
@@ -46,18 +51,28 @@ class AIReceptionistDemo:
         
     def load_environment(self):
         """Load environment variables from .env.local"""
+        logger.info("Starting environment loading")
         env_files = ['.env.local', '.env']
         loaded = False
-        
+
         for env_file in env_files:
+            logger.info(f"Checking for env file: {env_file}")
             if os.path.exists(env_file):
+                logger.info(f"Loading environment from {env_file}")
                 load_dotenv(env_file)
                 loaded = True
-                console.print(f"✅ Loaded environment from {env_file}", style="green")
+                if console:
+                    console.print(f"[green]Loaded environment from {env_file}[/green]")
+                else:
+                    print(f"Loaded environment from {env_file}")
                 break
-                
+
         if not loaded:
-            console.print("❌ No .env file found. Please create .env.local with your API keys.", style="red")
+            logger.error("No .env file found")
+            if console:
+                console.print("[red]No .env file found. Please create .env.local with your API keys.[/red]")
+            else:
+                print("No .env file found. Please create .env.local with your API keys.")
             self.show_env_template()
             sys.exit(1)
             
@@ -76,9 +91,15 @@ class AIReceptionistDemo:
                 missing_vars.append(var)
                 
         if missing_vars:
-            console.print("❌ Missing required environment variables:", style="red")
+            if console:
+                console.print("[red]Missing required environment variables:[/red]")
+            else:
+                print("Missing required environment variables:")
             for var in missing_vars:
-                console.print(f"   - {var}", style="red")
+                if console:
+                    console.print(f"   - {var}", style="red")
+                else:
+                    print(f"   - {var}")
             self.show_env_template()
             sys.exit(1)
             
@@ -116,15 +137,24 @@ NEXT_PUBLIC_APP_URL=http://localhost:3000
             # Initialize HTTP client for VAPI
             self.http_client = httpx.AsyncClient()
             
-            console.print("✅ All clients initialized successfully", style="green")
-            
+            if console:
+                console.print("[green]All clients initialized successfully[/green]")
+            else:
+                print("All clients initialized successfully")
+
         except Exception as e:
-            console.print(f"❌ Failed to initialize clients: {e}", style="red")
+            if console:
+                console.print(f"[red]Failed to initialize clients: {e}[/red]")
+            else:
+                print(f"Failed to initialize clients: {e}")
             sys.exit(1)
             
     async def test_connections(self):
         """Test all service connections"""
-        console.print("\n🔍 Testing service connections...", style="blue")
+        if console:
+            console.print("\n[blue]Testing service connections...[/blue]")
+        else:
+            print("\nTesting service connections...")
         
         # Test Gemini
         try:
@@ -132,17 +162,29 @@ NEXT_PUBLIC_APP_URL=http://localhost:3000
                 self.gemini_model.generate_content, 
                 "Hello, this is a test. Please respond with 'Connection successful.'"
             )
-            console.print("✅ Gemini AI: Connected", style="green")
+            if console:
+                console.print("[green]Gemini AI: Connected[/green]")
+            else:
+                print("Gemini AI: Connected")
         except Exception as e:
-            console.print(f"❌ Gemini AI: {e}", style="red")
-            
+            if console:
+                console.print(f"[red]Gemini AI: {e}[/red]")
+            else:
+                print(f"Gemini AI: {e}")
+
         # Test Supabase
         try:
             result = self.supabase.table('profiles').select('id').limit(1).execute()
-            console.print("✅ Supabase: Connected", style="green")
+            if console:
+                console.print("[green]Supabase: Connected[/green]")
+            else:
+                print("Supabase: Connected")
         except Exception as e:
-            console.print(f"❌ Supabase: {e}", style="red")
-            
+            if console:
+                console.print(f"[red]Supabase: {e}[/red]")
+            else:
+                print(f"Supabase: {e}")
+
         # Test VAPI
         try:
             headers = {
@@ -151,15 +193,27 @@ NEXT_PUBLIC_APP_URL=http://localhost:3000
             }
             response = await self.http_client.get('https://api.vapi.ai/assistant', headers=headers)
             if response.status_code == 200:
-                console.print("✅ VAPI: Connected", style="green")
+                if console:
+                    console.print("[green]VAPI: Connected[/green]")
+                else:
+                    print("VAPI: Connected")
             else:
-                console.print(f"❌ VAPI: HTTP {response.status_code}", style="red")
+                if console:
+                    console.print(f"[red]VAPI: HTTP {response.status_code}[/red]")
+                else:
+                    print(f"VAPI: HTTP {response.status_code}")
         except Exception as e:
-            console.print(f"❌ VAPI: {e}", style="red")
+            if console:
+                console.print(f"[red]VAPI: {e}[/red]")
+            else:
+                print(f"VAPI: {e}")
             
     async def create_demo_assistant(self):
         """Create a demo AI assistant configuration"""
-        console.print("\n🤖 Creating demo AI assistant...", style="blue")
+        if console:
+            console.print("\n[blue]Creating demo AI assistant...[/blue]")
+        else:
+            print("\nCreating demo AI assistant...")
         
         system_prompt = """
 You are a professional AI receptionist for a demo business. Your role is to:
@@ -188,7 +242,10 @@ BOOKING_REQUEST: {
         """.strip()
         
         self.system_prompt = system_prompt
-        console.print("✅ Demo assistant configured", style="green")
+        if console:
+            console.print("[green]Demo assistant configured[/green]")
+        else:
+            print("Demo assistant configured")
         
     async def chat_with_agent(self, user_message: str) -> str:
         """Send a message to the AI agent and get response"""
@@ -255,21 +312,30 @@ BOOKING_REQUEST: {
                 "created_at": datetime.now().isoformat()
             }
             
-            console.print("\n📅 Booking Request Detected:", style="yellow")
+            if console:
+                console.print("\n[yellow]Booking Request Detected:[/yellow]")
+            else:
+                print("\nBooking Request Detected:")
             table = Table(show_header=True, header_style="bold magenta")
             table.add_column("Field")
             table.add_column("Value")
-            
+
             for key, value in booking_record.items():
                 if value and key != "created_at":
                     table.add_row(key.replace("_", " ").title(), str(value))
-                    
+
             console.print(table)
-            
+
         except json.JSONDecodeError:
-            console.print("⚠️ Could not parse booking request JSON", style="yellow")
+            if console:
+                console.print("[yellow]Could not parse booking request JSON[/yellow]")
+            else:
+                print("Could not parse booking request JSON")
         except Exception as e:
-            console.print(f"❌ Error handling booking: {e}", style="red")
+            if console:
+                console.print(f"[red]Error handling booking: {e}[/red]")
+            else:
+                print(f"Error handling booking: {e}")
             
     async def show_conversation_history(self):
         """Display conversation history"""
@@ -277,12 +343,15 @@ BOOKING_REQUEST: {
             console.print("No conversation history yet.", style="yellow")
             return
             
-        console.print("\n📜 Conversation History:", style="blue")
+        if console:
+            console.print("\n[blue]Conversation History:[/blue]")
+        else:
+            print("\nConversation History:")
         for i, msg in enumerate(self.conversation_history[-10:], 1):
             role_style = "blue" if msg["role"] == "user" else "green"
             role_name = "You" if msg["role"] == "user" else "AI Agent"
             timestamp = msg["timestamp"][:19]  # Remove microseconds
-            
+
             console.print(f"[{i}] {timestamp} - {role_name}:", style=role_style)
             console.print(f"    {msg['content']}\n")
             
@@ -303,7 +372,7 @@ Available Commands:
         """Run interactive demo session"""
         # Welcome message
         welcome = """
-🤖 AI Receptionist Backend Demo
+AI Receptionist Backend Demo
 
 This demo allows you to interact directly with your AI receptionist agent.
 The agent is configured with demo business information and can handle:
@@ -322,14 +391,20 @@ Type /help for available commands.
         # Create demo assistant
         await self.create_demo_assistant()
         
-        console.print("\n💬 Start chatting with your AI agent (type /quit to exit):", style="blue")
+        if console:
+            console.print("\n[blue]Start chatting with your AI agent (type /quit to exit):[/blue]")
+        else:
+            print("\nStart chatting with your AI agent (type /quit to exit):")
         
         while True:
             try:
                 user_input = Prompt.ask("\n[bold blue]You[/bold blue]")
                 
                 if user_input.lower() in ['/quit', '/exit']:
-                    console.print("👋 Goodbye!", style="green")
+                    if console:
+                        console.print("[green]Goodbye![/green]")
+                    else:
+                        print("Goodbye!")
                     break
                 elif user_input.lower() == '/help':
                     self.show_commands()
@@ -337,24 +412,33 @@ Type /help for available commands.
                     await self.show_conversation_history()
                 elif user_input.lower() == '/clear':
                     self.conversation_history = []
-                    console.print("🗑️ Conversation history cleared", style="yellow")
+                    if console:
+                        console.print("[yellow]Conversation history cleared[/yellow]")
+                    else:
+                        print("Conversation history cleared")
                 elif user_input.lower() == '/test':
                     await self.test_connections()
                 elif user_input.strip():
                     # Send message to AI agent
                     console.print("\n[bold green]AI Agent[/bold green]:")
                     
-                    with console.status("🤔 Thinking...", spinner="dots"):
+                    with console.status("Thinking...", spinner="dots"):
                         response = await self.chat_with_agent(user_input)
                     
                     # Display response as markdown for better formatting
                     console.print(Markdown(response))
                     
             except KeyboardInterrupt:
-                console.print("\n👋 Goodbye!", style="green")
+                if console:
+                    console.print("\n[green]Goodbye![/green]")
+                else:
+                    print("\nGoodbye!")
                 break
             except Exception as e:
-                console.print(f"❌ Error: {e}", style="red")
+                if console:
+                    console.print(f"[red]Error: {e}[/red]")
+                else:
+                    print(f"Error: {e}")
                 
     async def cleanup(self):
         """Cleanup resources"""
@@ -374,6 +458,6 @@ if __name__ == "__main__":
     try:
         asyncio.run(main())
     except KeyboardInterrupt:
-        print("\n👋 Demo interrupted by user")
+        print("\nDemo interrupted by user")
     except Exception as e:
-        print(f"❌ Demo failed: {e}")
+        print(f"Demo failed: {e}")

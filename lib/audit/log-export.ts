@@ -279,7 +279,7 @@ export class LogExportService {
       }
 
       // Compress if requested
-      let finalData = formattedData
+      const finalData = formattedData
       let compressionExtension = ''
 
       if (exportRequest.compression !== 'none') {

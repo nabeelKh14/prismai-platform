@@ -130,7 +130,7 @@ export class PersonalizationOrchestrator {
       let result: any = null
       let recommendations: string[] = []
       let insights: string[] = []
-      let errors: string[] = []
+      const errors: string[] = []
 
       // Route to appropriate handler
       switch (action) {

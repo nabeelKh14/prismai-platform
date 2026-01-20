@@ -477,7 +477,7 @@ export class ContentAdaptationEngine {
       // Infer preferences based on lead data and activities
       let preferredComplexity: 'basic' | 'intermediate' | 'advanced' = 'intermediate'
       let preferredTone: 'formal' | 'casual' | 'professional' | 'friendly' = 'professional'
-      let preferredLength: 'short' | 'medium' | 'long' = 'medium'
+      const preferredLength: 'short' | 'medium' | 'long' = 'medium'
 
       if (lead) {
         // Infer complexity based on job title and company
@@ -750,7 +750,7 @@ export class ContentAdaptationEngine {
     adaptations: ContentAdaptationStrategy[],
     userId: string
   ): Promise<ContentTemplate> {
-    let adaptedContent = { ...baseContent }
+    const adaptedContent = { ...baseContent }
 
     for (const adaptation of adaptations) {
       // Apply each adaptation

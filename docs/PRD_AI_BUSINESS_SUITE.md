@@ -5,7 +5,7 @@
 - **Version**: 1.0
 - **Date**: September 14, 2025
 - **Status**: Active Development
-- **Author**: Product Team
+- **Author**: NK
 - **Stakeholders**: Engineering, Design, Business
 
 ---

@@ -3,21 +3,114 @@ import { createClient } from "@/lib/supabase/server"
 import { z } from "zod"
 import { withErrorHandling, AuthenticationError } from "@/lib/errors"
 import { geminiClient } from "@/lib/ai/gemini-client"
+import type { SupabaseClient } from '@supabase/supabase-js'
+import type { User } from '@/lib/types/api'
+
+// AI Suite specific types
+interface LeadMetrics {
+  total: number
+  qualified: number
+  converted: number
+  averageScore: number
+  activities: number
+  sources: Record<string, number>
+  conversionFunnel: Record<string, unknown>
+}
+
+interface CallMetrics {
+  total: number
+  answered: number
+  avgDuration: number
+  avgSentiment: number
+  bookingsCreated: number
+}
+
+interface ChatMetrics {
+  total: number
+  resolved: number
+  avgSatisfaction: number
+  totalMessages: number
+  escalations: number
+}
+
+interface EmailMetrics {
+  total: number
+  sent: number
+  totalEmailsSent: number
+  openRate: number
+  clickRate: number
+}
+
+interface AnalyticsData {
+  totalEvents: number
+  uniqueUsers: number
+  metricsTracked: number
+  topEvents: Record<string, number>
+}
+
+interface BusinessAnalysis {
+  overview: {
+    totalInteractions: number
+    overallEfficiency: number
+    crossServiceSynergy: number
+    automationLevel: number
+  }
+  serviceBreakdown: {
+    leads: LeadMetrics
+    calls: CallMetrics
+    chat: ChatMetrics
+    email: EmailMetrics
+  }
+  aiAnalysis: {
+    insights: string[]
+    opportunities: string[]
+    risks: string[]
+    predictions: string[]
+  }
+  recommendations: string[]
+  timeframe: { startDate: string; endDate: string }
+}
+
+interface ServiceIntegration {
+  triggerService: 'receptionist' | 'leads' | 'chatbot' | 'marketing' | 'analytics'
+  targetServices: ('receptionist' | 'leads' | 'chatbot' | 'marketing' | 'analytics')[]
+  eventData: Record<string, unknown>
+  automationRules?: Record<string, unknown>
+}
+
+interface IntegrationResult {
+  trigger: string
+  targets: string[]
+  results: unknown[]
+  automationApplied: boolean
+  timestamp: string
+}
+
+interface OptimizationPlan {
+  [key: string]: unknown
+}
+
+interface OptimizationResult {
+  optimizationPlan: OptimizationPlan
+  executedActions: unknown[]
+  expectedImprovements: unknown
+  timeline: unknown
+}
 
 // Validation schemas
 
 const integrationRequestSchema = z.object({
   triggerService: z.enum(['receptionist', 'leads', 'chatbot', 'marketing', 'analytics']),
   targetServices: z.array(z.enum(['receptionist', 'leads', 'chatbot', 'marketing', 'analytics'])),
-  eventData: z.record(z.any()),
-  automationRules: z.record(z.any()).optional(),
+  eventData: z.record(z.unknown()),
+  automationRules: z.record(z.unknown()).optional(),
 })
 
 // AI Suite Orchestrator
 class AISuiteOrchestrator {
-  static async analyzeBusinessPerformance(supabase: any, userId: string, timeframe: string = '30d') {
+  static async analyzeBusinessPerformance(supabase: SupabaseClient, userId: string, timeframe: string = '30d'): Promise<BusinessAnalysis> {
     const { startDate, endDate } = this.getDateRange(timeframe)
-    
+
     // Collect data from all services
     const [leadData, callData, chatData, emailData, analytics] = await Promise.all([
       this.getLeadMetrics(supabase, userId, startDate, endDate),
@@ -56,16 +149,16 @@ class AISuiteOrchestrator {
     }
   }
 
-  static async optimizeAllServices(supabase: any, userId: string) {
+  static async optimizeAllServices(supabase: SupabaseClient, userId: string): Promise<OptimizationResult> {
     // Get current performance metrics
     const analysis = await this.analyzeBusinessPerformance(supabase, userId)
-    
+
     // Generate optimization strategies
     const optimizationPlan = await this.generateOptimizationPlan(analysis)
-    
+
     // Execute optimization actions
     const results = await this.executeOptimizations(supabase, userId, optimizationPlan)
-    
+
     return {
       optimizationPlan,
       executedActions: results,
@@ -75,13 +168,13 @@ class AISuiteOrchestrator {
   }
 
   static async handleCrossServiceIntegration(
-    supabase: any, 
-    userId: string, 
-    integration: any
-  ) {
+    supabase: SupabaseClient,
+    userId: string,
+    integration: ServiceIntegration
+  ): Promise<IntegrationResult> {
     const { triggerService, targetServices, eventData, automationRules } = integration
 
-    const results = []
+    const results: unknown[] = []
 
     // Process integration based on trigger service
     switch (triggerService) {
@@ -112,7 +205,7 @@ class AISuiteOrchestrator {
   }
 
   // Service-specific data collection methods
-  static async getLeadMetrics(supabase: any, userId: string, startDate: string, endDate: string) {
+  static async getLeadMetrics(supabase: SupabaseClient, userId: string, startDate: string, endDate: string): Promise<LeadMetrics> {
     const { data: leads } = await supabase
       .from('leads')
       .select('*')
@@ -123,20 +216,20 @@ class AISuiteOrchestrator {
     const { data: activities } = await supabase
       .from('lead_activities')
       .select('*')
-      .in('lead_id', leads?.map((l: any) => l.id) || [])
+      .in('lead_id', leads?.map((l: { id: string }) => l.id) || [])
 
     return {
       total: leads?.length || 0,
-      qualified: leads?.filter((l: any) => l.status === 'qualified').length || 0,
-      converted: leads?.filter((l: any) => l.status === 'customer').length || 0,
-      averageScore: leads?.reduce((sum: number, l: any) => sum + (l.lead_score || 0), 0) / (leads?.length || 1),
+      qualified: leads?.filter((l: { status: string }) => l.status === 'qualified').length || 0,
+      converted: leads?.filter((l: { status: string }) => l.status === 'customer').length || 0,
+      averageScore: leads?.reduce((sum: number, l: { lead_score?: number }) => sum + (l.lead_score || 0), 0) / (leads?.length || 1),
       activities: activities?.length || 0,
       sources: this.groupBy(leads || [], 'source_id'),
       conversionFunnel: this.calculateConversionFunnel(leads || [])
     }
   }
 
-  static async getCallMetrics(supabase: any, userId: string, startDate: string, endDate: string) {
+  static async getCallMetrics(supabase: SupabaseClient, userId: string, startDate: string, endDate: string): Promise<CallMetrics> {
     const { data: calls } = await supabase
       .from('call_logs')
       .select('*')
@@ -146,14 +239,14 @@ class AISuiteOrchestrator {
 
     return {
       total: calls?.length || 0,
-      answered: calls?.filter((c: any) => c.call_status === 'answered').length || 0,
-      avgDuration: calls?.reduce((sum: number, c: any) => sum + (c.call_duration || 0), 0) / (calls?.length || 1),
-      avgSentiment: calls?.reduce((sum: number, c: any) => sum + (c.sentiment_score || 0), 0) / (calls?.length || 1),
-      bookingsCreated: calls?.filter((c: any) => c.booking_created).length || 0
+      answered: calls?.filter((c: { call_status: string }) => c.call_status === 'answered').length || 0,
+      avgDuration: calls?.reduce((sum: number, c: { call_duration?: number }) => sum + (c.call_duration || 0), 0) / (calls?.length || 1),
+      avgSentiment: calls?.reduce((sum: number, c: { sentiment_score?: number }) => sum + (c.sentiment_score || 0), 0) / (calls?.length || 1),
+      bookingsCreated: calls?.filter((c: { booking_created?: boolean }) => c.booking_created).length || 0
     }
   }
 
-  static async getChatMetrics(supabase: any, userId: string, startDate: string, endDate: string) {
+  static async getChatMetrics(supabase: SupabaseClient, userId: string, startDate: string, endDate: string): Promise<ChatMetrics> {
     const { data: conversations } = await supabase
       .from('chat_conversations')
       .select('*, chat_messages(*)')
@@ -163,14 +256,14 @@ class AISuiteOrchestrator {
 
     return {
       total: conversations?.length || 0,
-      resolved: conversations?.filter((c: any) => c.status === 'resolved').length || 0,
-      avgSatisfaction: conversations?.reduce((sum: number, c: any) => sum + (c.satisfaction_rating || 0), 0) / (conversations?.length || 1),
-      totalMessages: conversations?.reduce((sum: number, c: any) => sum + (c.chat_messages?.length || 0), 0) || 0,
-      escalations: conversations?.filter((c: any) => c.status === 'escalated').length || 0
+      resolved: conversations?.filter((c: { status: string }) => c.status === 'resolved').length || 0,
+      avgSatisfaction: conversations?.reduce((sum: number, c: { satisfaction_rating?: number }) => sum + (c.satisfaction_rating || 0), 0) / (conversations?.length || 1),
+      totalMessages: conversations?.reduce((sum: number, c: { chat_messages?: unknown[] }) => sum + (c.chat_messages?.length || 0), 0) || 0,
+      escalations: conversations?.filter((c: { status: string }) => c.status === 'escalated').length || 0
     }
   }
 
-  static async getEmailMetrics(supabase: any, userId: string, startDate: string, endDate: string) {
+  static async getEmailMetrics(supabase: SupabaseClient, userId: string, startDate: string, endDate: string): Promise<EmailMetrics> {
     const { data: campaigns } = await supabase
       .from('email_campaigns')
       .select('*')
@@ -178,7 +271,7 @@ class AISuiteOrchestrator {
       .gte('created_at', startDate)
       .lte('created_at', endDate)
 
-    const totalStats = campaigns?.reduce((acc: any, c: any) => {
+    const totalStats = campaigns?.reduce((acc: { sent: number; opened: number; clicked: number }, c: { statistics?: { sent?: number; opened?: number; clicked?: number } }) => {
       const stats = c.statistics || {}
       acc.sent += stats.sent || 0
       acc.opened += stats.opened || 0
@@ -188,14 +281,14 @@ class AISuiteOrchestrator {
 
     return {
       total: campaigns?.length || 0,
-      sent: campaigns?.filter((c: any) => c.status === 'sent').length || 0,
+      sent: campaigns?.filter((c: { status: string }) => c.status === 'sent').length || 0,
       totalEmailsSent: totalStats.sent,
       openRate: totalStats.sent > 0 ? (totalStats.opened / totalStats.sent) * 100 : 0,
       clickRate: totalStats.opened > 0 ? (totalStats.clicked / totalStats.opened) * 100 : 0
     }
   }
 
-  static async getAnalyticsData(supabase: any, userId: string, startDate: string, endDate: string) {
+  static async getAnalyticsData(supabase: SupabaseClient, userId: string, startDate: string, endDate: string): Promise<AnalyticsData> {
     const { data: events } = await supabase
       .from('analytics_events')
       .select('*')
@@ -212,14 +305,21 @@ class AISuiteOrchestrator {
 
     return {
       totalEvents: events?.length || 0,
-      uniqueUsers: new Set(events?.map((e: any) => e.session_id) || []).size,
+      uniqueUsers: new Set(events?.map((e: { session_id: string }) => e.session_id) || []).size,
       metricsTracked: metrics?.length || 0,
       topEvents: this.groupBy(events || [], 'event_name')
     }
   }
 
   // AI Analysis Methods
-  static async generateComprehensiveAnalysis(data: any): Promise<{
+  static async generateComprehensiveAnalysis(data: {
+    leadData: LeadMetrics
+    callData: CallMetrics
+    chatData: ChatMetrics
+    emailData: EmailMetrics
+    analytics: AnalyticsData
+    timeframe: string
+  }): Promise<{
     insights: string[]
     opportunities: string[]
     risks: string[]
@@ -271,14 +371,14 @@ Focus on:
   }
 
   // Integration processing methods
-  static async processLeadIntegration(supabase: any, userId: string, targetServices: string[], eventData: any) {
+  static async processLeadIntegration(supabase: SupabaseClient, userId: string, targetServices: string[], eventData: Record<string, unknown>): Promise<unknown[]> {
     const results = []
 
     for (const service of targetServices) {
       switch (service) {
         case 'chatbot':
           // Auto-create chatbot greeting for high-value leads
-          if (eventData.leadScore > 80) {
+          if (typeof eventData.leadScore === 'number' && eventData.leadScore > 80) {
             // Implementation would create personalized chatbot flow
             results.push({ service: 'chatbot', action: 'personalized_greeting_created' })
           }
@@ -303,7 +403,7 @@ Focus on:
     return results
   }
 
-  static async processChatIntegration(supabase: any, userId: string, targetServices: string[], eventData: any) {
+  static async processChatIntegration(supabase: SupabaseClient, userId: string, targetServices: string[], eventData: Record<string, unknown>): Promise<unknown[]> {
     const results = []
 
     for (const service of targetServices) {
@@ -326,7 +426,7 @@ Focus on:
   }
 
   // Utility methods
-  static calculateOverallEfficiency(leadData: any, callData: any, chatData: any, emailData: any): number {
+  static calculateOverallEfficiency(leadData: LeadMetrics, callData: CallMetrics, chatData: ChatMetrics, emailData: EmailMetrics): number {
     const leadEfficiency = leadData.total > 0 ? (leadData.converted / leadData.total) * 100 : 0
     const callEfficiency = callData.total > 0 ? (callData.answered / callData.total) * 100 : 0
     const chatEfficiency = chatData.total > 0 ? (chatData.resolved / chatData.total) * 100 : 0
@@ -335,12 +435,12 @@ Focus on:
     return Math.round((leadEfficiency + callEfficiency + chatEfficiency + emailEfficiency) / 4)
   }
 
-  static groupBy(array: any[], key: string): Record<string, number> {
+  static groupBy(array: unknown[], key: string): Record<string, number> {
     return array.reduce((groups, item) => {
-      const groupKey = item[key] || 'unknown'
-      groups[groupKey] = (groups[groupKey] || 0) + 1
+      const groupKey = (item as Record<string, unknown>)[key] || 'unknown'
+      groups[groupKey as string] = (groups[groupKey as string] || 0) + 1
       return groups
-    }, {})
+    }, {} as Record<string, number>)
   }
 
   static getDateRange(timeframe: string) {
@@ -360,47 +460,47 @@ Focus on:
   }
 
   // Placeholder methods (would be fully implemented)
-  static calculateServiceSynergy(_leadData: any, _callData: any, _chatData: any, _emailData: any): number {
+  static calculateServiceSynergy(_leadData: LeadMetrics, _callData: CallMetrics, _chatData: ChatMetrics, _emailData: EmailMetrics): number {
     return 85 // Placeholder
   }
 
-  static calculateAutomationLevel(_leadData: any, _callData: any, _chatData: any, _emailData: any): number {
+  static calculateAutomationLevel(_leadData: LeadMetrics, _callData: CallMetrics, _chatData: ChatMetrics, _emailData: EmailMetrics): number {
     return 87 // Placeholder
   }
 
-  static calculateConversionFunnel(_leads: any[]): any {
+  static calculateConversionFunnel(_leads: unknown[]): Record<string, unknown> {
     return {} // Placeholder
   }
 
-  static generateCrossServiceRecommendations(_leadData: any, _callData: any, _chatData: any, _emailData: any): string[] {
+  static generateCrossServiceRecommendations(_leadData: LeadMetrics, _callData: CallMetrics, _chatData: ChatMetrics, _emailData: EmailMetrics): string[] {
     return ['Integrate chatbot with lead scoring', 'Automate email follow-ups for qualified leads']
   }
 
-  static async generateOptimizationPlan(_analysis: any): Promise<any> {
+  static async generateOptimizationPlan(_analysis: BusinessAnalysis): Promise<OptimizationPlan> {
     return {} // Placeholder
   }
 
-  static async executeOptimizations(_supabase: any, _userId: string, _plan: any): Promise<any> {
-    return {} // Placeholder
-  }
-
-  static calculateExpectedImprovements(_plan: any): any {
-    return {} // Placeholder
-  }
-
-  static generateOptimizationTimeline(_plan: any): any {
-    return {} // Placeholder
-  }
-
-  static async processCallIntegration(_supabase: any, _userId: string, _targetServices: string[], _eventData: any): Promise<any[]> {
+  static async executeOptimizations(_supabase: SupabaseClient, _userId: string, _plan: OptimizationPlan): Promise<unknown[]> {
     return [] // Placeholder
   }
 
-  static async processMarketingIntegration(_supabase: any, _userId: string, _targetServices: string[], _eventData: any): Promise<any[]> {
+  static calculateExpectedImprovements(_plan: OptimizationPlan): unknown {
+    return {} // Placeholder
+  }
+
+  static generateOptimizationTimeline(_plan: OptimizationPlan): unknown {
+    return {} // Placeholder
+  }
+
+  static async processCallIntegration(_supabase: SupabaseClient, _userId: string, _targetServices: string[], _eventData: Record<string, unknown>): Promise<unknown[]> {
     return [] // Placeholder
   }
 
-  static async processAnalyticsIntegration(_supabase: any, _userId: string, _targetServices: string[], _eventData: any): Promise<any[]> {
+  static async processMarketingIntegration(_supabase: SupabaseClient, _userId: string, _targetServices: string[], _eventData: Record<string, unknown>): Promise<unknown[]> {
+    return [] // Placeholder
+  }
+
+  static async processAnalyticsIntegration(_supabase: SupabaseClient, _userId: string, _targetServices: string[], _eventData: Record<string, unknown>): Promise<unknown[]> {
     return [] // Placeholder
   }
 }
@@ -433,12 +533,12 @@ export const POST = withErrorHandling(async (request: NextRequest) => {
   }
 })
 
-async function handleBusinessAnalysis(supabase: any, user: any, _body: any) {
+async function handleBusinessAnalysis(supabase: SupabaseClient, user: User, _body: unknown) {
   const timeframe = '30d'
 
   const analysis = await AISuiteOrchestrator.analyzeBusinessPerformance(
-    supabase, 
-    user.id, 
+    supabase,
+    user.id,
     timeframe
   )
 
@@ -451,7 +551,7 @@ async function handleBusinessAnalysis(supabase: any, user: any, _body: any) {
   })
 }
 
-async function handleServiceOptimization(supabase: any, user: any, body: any) {
+async function handleServiceOptimization(supabase: SupabaseClient, user: User, _body: unknown) {
   const optimization = await AISuiteOrchestrator.optimizeAllServices(supabase, user.id)
 
   return NextResponse.json({
@@ -463,9 +563,9 @@ async function handleServiceOptimization(supabase: any, user: any, body: any) {
   })
 }
 
-async function handleServiceIntegration(supabase: any, user: any, body: any) {
+async function handleServiceIntegration(supabase: SupabaseClient, user: User, body: unknown) {
   const integrationData = integrationRequestSchema.parse(body)
-  
+
   const result = await AISuiteOrchestrator.handleCrossServiceIntegration(
     supabase,
     user.id,

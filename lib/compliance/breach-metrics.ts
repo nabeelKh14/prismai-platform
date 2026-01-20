@@ -302,10 +302,10 @@ export class BreachMetricsService {
 
       if (error) throw error;
 
-      let gdpr72HourCompliance = 100;
-      let hipaa60DayCompliance = 100;
-      let missedDeadlines = 0;
-      let totalDeadlines = incidents?.length || 0;
+      const gdpr72HourCompliance = 100;
+      const hipaa60DayCompliance = 100;
+      const missedDeadlines = 0;
+      const totalDeadlines = incidents?.length || 0;
 
       // This would need more complex logic to check actual notification timelines
       // For now, use placeholder calculations

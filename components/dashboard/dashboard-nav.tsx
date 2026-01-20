@@ -44,21 +44,21 @@ export function DashboardNav() {
       {/* Sidebar */}
       <div
         className={cn(
-          "fixed inset-y-0 left-0 z-40 w-64 bg-background border-r transform transition-transform duration-200 ease-in-out lg:translate-x-0",
+          "fixed inset-y-0 left-0 z-40 w-64 bg-slate-950/50 backdrop-blur-xl border-r border-white/10 transform transition-transform duration-200 ease-in-out lg:translate-x-0 shadow-2xl",
           mobileMenuOpen ? "translate-x-0" : "-translate-x-full",
         )}
       >
         <div className="flex flex-col h-full">
           {/* Logo */}
-          <div className="flex items-center px-6 py-4 border-b">
-            <div className="w-8 h-8 bg-gradient-to-r from-cyan-500 to-pink-500 rounded-lg flex items-center justify-center">
-              <Phone className="h-4 w-4 text-white" />
+          <div className="flex items-center px-6 py-6 border-b border-white/10">
+            <div className="w-10 h-10 bg-gradient-to-br from-cyan-500 to-pink-500 rounded-xl flex items-center justify-center shadow-lg shadow-cyan-500/20">
+              <Phone className="h-5 w-5 text-white" />
             </div>
-            <span className="ml-2 text-lg font-bold">PrismAI</span>
+            <span className="ml-3 text-xl font-bold text-white tracking-tight">PrismAI</span>
           </div>
 
           {/* Navigation */}
-          <nav className="flex-1 px-4 py-6 space-y-2">
+          <nav className="flex-1 px-4 py-6 space-y-1 overflow-y-auto custom-scrollbar">
             {navigation.map((item) => {
               const isActive = pathname === item.href
               return (
@@ -66,19 +66,22 @@ export function DashboardNav() {
                   key={item.name}
                   href={item.href}
                   className={cn(
-                    "flex items-center px-3 py-2 text-sm font-medium rounded-lg transition-colors relative",
+                    "flex items-center px-4 py-3 text-sm font-medium rounded-xl transition-all duration-200 group relative",
                     isActive
-                      ? "bg-primary text-primary-foreground"
-                      : "text-muted-foreground hover:text-foreground hover:bg-muted",
+                      ? "bg-gradient-to-r from-cyan-500/10 to-pink-500/10 text-cyan-400 border border-cyan-500/20"
+                      : "text-gray-400 hover:text-white hover:bg-white/5",
                   )}
                   onClick={() => setMobileMenuOpen(false)}
                 >
-                  <item.icon className="h-4 w-4 mr-3" />
+                  <item.icon className={cn("h-5 w-5 mr-3 transition-colors", isActive ? "text-cyan-400" : "text-gray-500 group-hover:text-cyan-300")} />
                   {item.name}
                   {item.badge && (
-                    <span className="ml-auto px-2 py-0.5 text-xs font-medium bg-gradient-to-r from-cyan-500 to-pink-500 text-white rounded-full">
+                    <span className="ml-auto px-2 py-0.5 text-[10px] font-bold bg-gradient-to-r from-cyan-500 to-pink-500 text-white rounded-full uppercase tracking-tighter">
                       {item.badge}
                     </span>
+                  )}
+                  {isActive && (
+                    <div className="absolute left-0 w-1 h-6 bg-cyan-500 rounded-r-full" />
                   )}
                 </Link>
               )

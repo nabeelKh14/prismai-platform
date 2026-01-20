@@ -126,6 +126,9 @@ __pycache__/
 *.so
 .Python
 
+# Python files (exclude from build)
+*.py
+
 # Cache directories
 .cache/
 .parcel-cache/

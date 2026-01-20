@@ -1,6 +1,5 @@
 import { logger } from '@/lib/logger'
 import { performanceMonitor } from './performance-monitor'
-import { systemMetricsCollector } from './system-metrics-collector'
 import { databaseOptimizer } from './database-optimizer'
 import { cdnService } from './cdn-service'
 import { loadBalancer } from './load-balancer'
@@ -145,19 +144,6 @@ export class MonitoringSecurityWrapper {
     )
   }
 
-  /**
-   * Get secure system health
-   */
-  async getSecureSystemHealth(request: MonitoringRequest): Promise<any> {
-    return this.securePerformanceMonitoring(
-      'get_system_health',
-      request,
-      async () => {
-        const health = await systemMetricsCollector.getSystemHealth()
-        return this.config.enableEncryption ? this.encryptData(health) : health
-      }
-    )
-  }
 
   /**
    * Execute secure database query
@@ -562,7 +548,6 @@ export const monitoringSecurity = MonitoringSecurityWrapper.getInstance()
 
 // Backward compatibility exports
 export { performanceMonitor }
-export { systemMetricsCollector }
 export { databaseOptimizer }
 export { cdnService }
 export { loadBalancer }

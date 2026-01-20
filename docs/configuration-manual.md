@@ -2,57 +2,223 @@
 
 ## Overview
 
-This manual provides comprehensive configuration guidance for the PrismAI platform, covering environment variables, security settings, performance tuning, and operational configurations. Proper configuration is essential for security, performance, and maintainability.
+This manual provides comprehensive configuration guidance for the PrismAI Platform, covering environment variables, security settings, performance tuning, and operational configurations. Proper configuration is essential for security, performance, and maintainability.
 
 ## Environment Configuration
 
-### Environment Variables
+### Environment Variables Schema
 
-#### Core Application Settings
+PrismAI uses a comprehensive environment variable system with Zod schema validation for type safety and validation.
+
+#### Public Environment Variables (Client-side)
 
 ```bash
-# Application Configuration
+# Core Application Settings
 NODE_ENV=production
 NEXT_PUBLIC_APP_URL=https://yourdomain.com
-PORT=3000
-HOSTNAME=0.0.0.0
+NEXT_PUBLIC_SUPABASE_URL=https://your-project.supabase.co
+NEXT_PUBLIC_SUPABASE_ANON_KEY=your_supabase_anon_key
 
-# Build Configuration
-NEXT_TELEMETRY_DISABLED=1
-NEXT_PUBLIC_BUILD_ID=production-build
+# Analytics and Monitoring
+VERCEL_ANALYTICS_ID=your_vercel_analytics_id
+SENTRY_DSN=https://your-sentry-dsn@sentry.io/project
 
-# Performance Settings
-NODE_OPTIONS="--max-old-space-size=4096"
-GENERATE_SOURCEMAP=false
+# Logging Configuration
+LOG_LEVEL=info
+ENABLE_REQUEST_LOGGING=false
 ```
 
-#### Database Configuration
+#### Server Environment Variables (Private)
 
 ```bash
 # Supabase Configuration
-DATABASE_URL=postgresql://username:password@localhost:5432/prismai
+SUPABASE_URL=https://your-project.supabase.co
+SUPABASE_SERVICE_ROLE_KEY=your_service_role_key
+DATABASE_CONNECTION_LIMIT=20
+
+# AI Services Configuration
+GEMINI_API_KEY=your_gemini_api_key
+VAPI_API_KEY=your_vapi_api_key
+
+# Email Configuration
+RESEND_API_KEY=your_resend_api_key
+SMTP_HOST=smtp.gmail.com
+SMTP_PORT=587
+SMTP_USER=your_email@gmail.com
+SMTP_PASS=your_app_password
+
+# Security and Encryption
+JWT_SECRET=your_jwt_secret_key_32_chars_minimum
+ENCRYPTION_KEY=your_encryption_key_32_chars_minimum
+WEBHOOK_SECRET=your_webhook_secret
+
+# Caching and Performance
+UPSTASH_REDIS_REST_URL=https://your-redis-url.upstash.io
+UPSTASH_REDIS_REST_TOKEN=your_redis_token
+REDIS_URL=redis://localhost:6379
+HEALTH_CHECK_TOKEN=your_health_check_token
+```
+
+### Environment Variable Validation
+
+```typescript
+// Public environment variables schema
+const publicEnvSchema = z.object({
+  NODE_ENV: z.enum(['development', 'production', 'test']),
+  NEXT_PUBLIC_APP_URL: z.string().url(),
+  NEXT_PUBLIC_SUPABASE_URL: z.string().url(),
+  NEXT_PUBLIC_SUPABASE_ANON_KEY: z.string().min(1),
+  VERCEL_ANALYTICS_ID: z.string().optional(),
+  SENTRY_DSN: z.string().url().optional().or(z.literal('')),
+  LOG_LEVEL: z.enum(['error', 'warn', 'info', 'debug']).default('info'),
+  ENABLE_REQUEST_LOGGING: z.coerce.boolean().default(false)
+})
+
+// Server environment variables schema
+const serverEnvSchema = publicEnvSchema.extend({
+  SUPABASE_SERVICE_ROLE_KEY: z.string().min(1),
+  GEMINI_API_KEY: z.string().min(1),
+  VAPI_API_KEY: z.string().min(1),
+  RESEND_API_KEY: z.string().optional(),
+  SMTP_HOST: z.string().optional(),
+  SMTP_PORT: z.coerce.number().optional(),
+  SMTP_USER: z.string().optional(),
+  SMTP_PASS: z.string().optional(),
+  JWT_SECRET: z.string().min(32).optional(),
+  ENCRYPTION_KEY: z.string().min(32).optional(),
+  WEBHOOK_SECRET: z.string().optional(),
+  UPSTASH_REDIS_REST_URL: z.string().url().optional().or(z.literal('')),
+  UPSTASH_REDIS_REST_TOKEN: z.string().optional(),
+  REDIS_URL: z.string().url().optional().or(z.literal('')),
+  DATABASE_CONNECTION_LIMIT: z.coerce.number().default(20),
+  HEALTH_CHECK_TOKEN: z.string().optional()
+})
+```
+
+### Configuration Functions
+
+```typescript
+// Environment variable helper functions
+export function getPublicEnv(): z.infer<typeof publicEnvSchema>
+export function getServerEnv(): z.infer<typeof serverEnvSchema>
+export function requireEnv(key: string): string
+export function getOptionalEnv(key: string): string | undefined
+export function isDevelopment(): boolean
+export function isProduction(): boolean
+```
+
+## AI Services Configuration
+
+### Google Gemini AI
+
+```bash
+# Google Gemini Configuration
+GEMINI_API_KEY=your_gemini_api_key_here
+
+# Optional AI model configurations
+GEMINI_MODEL_DEFAULT=gemini-1.5-flash
+GEMINI_MODEL_PRO=gemini-1.5-pro
+GEMINI_EMBEDDING_MODEL=text-embedding-004
+GEMINI_MAX_TOKENS=4000
+GEMINI_TEMPERATURE=0.7
+```
+
+### VAPI Voice AI
+
+```bash
+# VAPI Configuration
+VAPI_API_KEY=your_vapi_api_key
+VAPI_WEBHOOK_URL=https://yourdomain.com/api/webhooks/vapi
+
+# Voice configuration
+VAPI_VOICE_ID=your_voice_id
+VAPI_MODEL=your_vapi_model
+```
+
+### ElevenLabs TTS
+
+```bash
+# ElevenLabs Configuration
+ELEVENLABS_API_KEY=your_elevenlabs_api_key
+ELEVENLABS_VOICE_ID=your_voice_id
+ELEVENLABS_MODEL=eleven_monolingual_v1
+```
+
+## Database Configuration
+
+### Supabase Configuration
+
+```bash
+# Supabase Connection
 SUPABASE_URL=https://your-project.supabase.co
 SUPABASE_ANON_KEY=your_supabase_anon_key
 SUPABASE_SERVICE_ROLE_KEY=your_service_role_key
 
-# Database Connection Pooling
-DB_POOL_MIN=2
-DB_POOL_MAX=10
-DB_POOL_IDLE=10000
-DB_POOL_TIMEOUT=30000
+# Database Connection Limits
+DATABASE_CONNECTION_LIMIT=20
 
-# Database Performance
-DB_QUERY_TIMEOUT=30000
-DB_CONNECTION_TIMEOUT=60000
+# Optional direct database URL
+DATABASE_URL=postgresql://username:password@host:port/database
 ```
 
-#### Authentication Configuration
+### Database Extensions
+
+```sql
+-- Required extensions for PrismAI
+CREATE EXTENSION IF NOT EXISTS "uuid-ossp";
+CREATE EXTENSION IF NOT EXISTS "pgcrypto";
+CREATE EXTENSION IF NOT EXISTS vector;  -- For vector search
+CREATE EXTENSION IF NOT EXISTS "pg_stat_statements";  -- For query optimization
+CREATE EXTENSION IF NOT EXISTS "pg_buffercache";  -- For buffer cache management
+```
+
+### Connection Pooling Configuration
+
+```bash
+# Connection pooling settings
+DB_POOL_MIN=2
+DB_POOL_MAX=20
+DB_POOL_IDLE_TIMEOUT=300
+DB_POOL_CONNECTION_TIMEOUT=30
+DB_QUERY_TIMEOUT=30000
+```
+
+## Caching Configuration
+
+### Redis Configuration
+
+```bash
+# Primary Redis (Upstash)
+UPSTASH_REDIS_REST_URL=https://your-redis-url.upstash.io
+UPSTASH_REDIS_REST_TOKEN=your_redis_token
+
+# Fallback Redis
+REDIS_URL=redis://localhost:6379
+REDIS_PASSWORD=your_redis_password
+REDIS_DB=0
+REDIS_KEY_PREFIX=prismai:
+```
+
+### Cache TTL Settings
+
+```typescript
+export const CACHE_TTL = {
+  SHORT: 300,      // 5 minutes
+  MEDIUM: 3600,    // 1 hour
+  LONG: 86400,     // 24 hours
+  SESSION: 3600,   // 1 hour
+  AI_RESPONSE: 1800, // 30 minutes
+  ANALYTICS: 900,  // 15 minutes
+} as const
+```
+
+## Security Configuration
+
+### Authentication & JWT
 
 ```bash
 # JWT Configuration
-NEXTAUTH_SECRET=your_nextauth_secret_key
-NEXTAUTH_URL=https://yourdomain.com
-JWT_SECRET=your_jwt_secret_key
+JWT_SECRET=your_jwt_secret_key_32_chars_minimum
 JWT_EXPIRES_IN=1h
 JWT_REFRESH_EXPIRES_IN=7d
 
@@ -63,114 +229,93 @@ SESSION_COOKIE_HTTPONLY=true
 SESSION_COOKIE_SAMESITE=strict
 SESSION_MAX_AGE=3600
 SESSION_REFRESH_MAX_AGE=604800
-
-# MFA Configuration
-MFA_ENABLED=true
-MFA_ISSUER=PrismAI
-MFA_TOTP_WINDOW=1
-MFA_SMS_ENABLED=true
-MFA_EMAIL_ENABLED=true
 ```
 
-#### AI Services Configuration
+### Encryption
 
 ```bash
-# Google Gemini AI
-GEMINI_API_KEY=your_gemini_api_key
-GEMINI_MODEL=gemini-1.5-flash
-GEMINI_MAX_TOKENS=1000
-GEMINI_TEMPERATURE=0.7
-GEMINI_EMBEDDING_MODEL=text-embedding-004
+# Encryption Configuration
+ENCRYPTION_KEY=your_encryption_key_32_chars_minimum
+ENCRYPTION_ALGORITHM=aes-256-gcm
 
-# ElevenLabs TTS
-ELEVENLABS_API_KEY=your_elevenlabs_api_key
-ELEVENLABS_VOICE_ID=your_voice_id
-ELEVENLABS_MODEL=eleven_monolingual_v1
-
-# VAPI Voice AI
-VAPI_API_KEY=your_vapi_api_key
-VAPI_MODEL=your_vapi_model
-VAPI_VOICE_ID=your_voice_id
-VAPI_WEBHOOK_URL=https://yourdomain.com/api/webhooks/vapi
+# File encryption
+FILE_ENCRYPTION_ENABLED=true
+FILE_ENCRYPTION_KEY=your_file_encryption_key
 ```
 
-#### Communication Services
+### Webhook Security
 
 ```bash
-# Twilio Configuration
+# Webhook Configuration
+WEBHOOK_SECRET=your_webhook_secret
+WEBHOOK_SIGNING_ENABLED=true
+WEBHOOK_TIMEOUT=10000
+```
+
+### Rate Limiting Configuration
+
+```bash
+# Rate Limiting Settings
+RATE_LIMIT_WINDOW_MS=900000
+RATE_LIMIT_MAX_REQUESTS=100
+RATE_LIMIT_SKIP_SUCCESSFUL_REQUESTS=false
+RATE_LIMIT_SKIP_FAILED_REQUESTS=false
+
+# Tier-based rate limiting
+RATE_LIMIT_FREE_TIER=100
+RATE_LIMIT_PRO_TIER=1000
+RATE_LIMIT_ENTERPRISE_TIER=10000
+```
+
+## Communication Services
+
+### Twilio Configuration
+
+```bash
+# Twilio SMS
 TWILIO_ACCOUNT_SID=your_twilio_account_sid
 TWILIO_AUTH_TOKEN=your_twilio_auth_token
 TWILIO_PHONE_NUMBER=+1234567890
 TWILIO_MESSAGING_SERVICE_SID=your_messaging_service_sid
 
-# WhatsApp Configuration
+# WhatsApp via Twilio
 WHATSAPP_ENABLED=true
-WHATSAPP_VERIFY_TOKEN=your_verify_token
+WHATSAPP_PHONE_NUMBER_ID=your_whatsapp_phone_number_id
+WHATSAPP_VERIFY_TOKEN=your_whatsapp_verify_token
 WHATSAPP_WEBHOOK_URL=https://yourdomain.com/api/webhooks/whatsapp
-
-# SMS Configuration
-SMS_ENABLED=true
-SMS_FROM_NUMBER=+1234567890
-SMS_MAX_LENGTH=160
 ```
 
-#### Security Configuration
+### Email Configuration
 
 ```bash
-# CSRF Protection
-CSRF_SECRET=your_csrf_secret_key
-CSRF_TOKEN_EXPIRES_IN=3600
-CSRF_COOKIE_NAME=csrf_token
+# Resend API
+RESEND_API_KEY=your_resend_api_key
+RESEND_FROM_EMAIL=noreply@yourdomain.com
 
-# Rate Limiting
-RATE_LIMIT_WINDOW_MS=900000
-RATE_LIMIT_MAX_REQUESTS=100
-RATE_LIMIT_ENABLED=true
+# SMTP Fallback
+SMTP_HOST=smtp.gmail.com
+SMTP_PORT=587
+SMTP_SECURE=false
+SMTP_USER=your_email@gmail.com
+SMTP_PASS=your_app_password
 
-# Security Headers
-SECURITY_HEADERS_ENABLED=true
-CSP_ENABLED=true
-HSTS_ENABLED=true
-HSTS_MAX_AGE=31536000
-
-# Content Security Policy
-CSP_DEFAULT_SRC=self
-CSP_SCRIPT_SRC=self unsafe-inline
-CSP_STYLE_SRC=self unsafe-inline
-CSP_IMG_SRC=self data: https:
-CSP_FONT_SRC=self data:
-CSP_CONNECT_SRC=self https: wss:
+# Email templates
+EMAIL_FROM=noreply@yourdomain.com
+EMAIL_REPLY_TO=support@yourdomain.com
 ```
 
-#### Caching Configuration
+## File Upload Configuration
 
 ```bash
-# Redis Configuration
-REDIS_URL=redis://localhost:6379
-REDIS_PASSWORD=your_redis_password
-REDIS_DB=0
-REDIS_KEY_PREFIX=prismai:
-
-# Cache TTL Settings
-CACHE_TTL=3600
-CACHE_SHORT_TTL=300
-CACHE_LONG_TTL=86400
-CACHE_SESSION_TTL=3600
-
-# Cache Keys
-CACHE_KEY_AGENTS=agents:list
-CACHE_KEY_KNOWLEDGE_BASE=kb:search
-CACHE_KEY_ANALYTICS=analytics:data
-```
-
-#### File Upload Configuration
-
-```bash
-# Upload Settings
+# File Upload Settings
 UPLOAD_PATH=/app/uploads
 UPLOAD_MAX_SIZE=10485760
 UPLOAD_ALLOWED_TYPES=image/jpeg,image/png,image/gif,application/pdf,text/csv,application/json
 UPLOAD_ENABLED=true
+
+# Supabase Storage
+SUPABASE_STORAGE_BUCKET=prismai-uploads
+SUPABASE_STORAGE_REGION=us-east-1
 
 # Image Optimization
 IMAGE_QUALITY=80
@@ -179,142 +324,65 @@ IMAGE_MAX_HEIGHT=1080
 IMAGE_FORMATS=webp,avif,jpeg
 ```
 
-#### Monitoring Configuration
+## Monitoring & Health Checks
 
 ```bash
-# Health Check
+# Health Check Configuration
 HEALTH_CHECK_ENABLED=true
-HEALTH_CHECK_PATH=/api/v1/health
+HEALTH_CHECK_PATH=/api/health
 HEALTH_CHECK_TIMEOUT=10000
+HEALTH_CHECK_TOKEN=your_health_check_token
 
 # Metrics
 METRICS_ENABLED=true
-METRICS_PATH=/api/v1/metrics
+METRICS_PATH=/api/metrics
 METRICS_COLLECTION_INTERVAL=60000
 
 # Logging
 LOG_LEVEL=info
-LOG_PATH=/app/logs
-LOG_MAX_SIZE=10485760
-LOG_MAX_FILES=10
-```
-
-#### Email Configuration
-
-```bash
-# SMTP Configuration
-SMTP_HOST=smtp.gmail.com
-SMTP_PORT=587
-SMTP_SECURE=false
-SMTP_USER=your_email@gmail.com
-SMTP_PASS=your_app_password
-
-# Email Templates
-EMAIL_FROM=noreply@yourdomain.com
-EMAIL_TEMPLATES_PATH=/app/templates/email
-EMAIL_ENABLED=true
+ENABLE_REQUEST_LOGGING=false
 ```
 
 ## Configuration Files
 
 ### Next.js Configuration
 
-#### next.config.mjs
-
-```javascript
-/** @type {import('next').NextConfig} */
+```typescript
+// next.config.mjs
 const nextConfig = {
-  // Output configuration
-  output: 'standalone',
-
-  // Security headers
-  async headers() {
-    return [
-      {
-        source: '/(.*)',
-        headers: [
-          {
-            key: 'X-Frame-Options',
-            value: 'DENY',
-          },
-          {
-            key: 'X-Content-Type-Options',
-            value: 'nosniff',
-          },
-          {
-            key: 'Referrer-Policy',
-            value: 'strict-origin-when-cross-origin',
-          },
-          {
-            key: 'Permissions-Policy',
-            value: 'camera=(), microphone=(), geolocation=()',
-          },
-          {
-            key: 'Content-Security-Policy',
-            value: process.env.NODE_ENV === 'production'
-              ? "default-src 'self'; script-src 'self' 'unsafe-inline'; style-src 'self' 'unsafe-inline'; img-src 'self' data: https:; font-src 'self' data:; connect-src 'self' https: wss:;"
-              : "default-src 'self'; script-src 'self' 'unsafe-eval' 'unsafe-inline'; style-src 'self' 'unsafe-inline'; img-src 'self' data: https:; font-src 'self' data:; connect-src 'self' https: wss:;",
-          },
-        ],
-      },
-    ]
+  // Build configuration
+  eslint: {
+    ignoreDuringBuilds: true,
   },
-
-  // Image optimization
-  images: {
-    unoptimized: process.env.NODE_ENV === 'development',
-    formats: ['image/webp', 'image/avif'],
-    deviceSizes: [640, 750, 828, 1080, 1200, 1920, 2048, 3840],
-    imageSizes: [16, 32, 48, 64, 96, 128, 256, 384],
-    dangerouslyAllowSVG: true,
-    contentSecurityPolicy: "default-src 'self'; script-src 'none'; sandbox;",
-    minimumCacheTTL: 60,
+  typescript: {
+    ignoreBuildErrors: true,
   },
-
-  // Performance optimizations
-  experimental: {
-    optimizePackageImports: [
-      '@radix-ui/react-icons',
-      'lucide-react',
-      'recharts',
-      'date-fns',
-      'clsx',
-      'tailwind-merge',
-      'class-variance-authority',
-    ],
-    optimizeCss: true,
-    scrollRestoration: true,
-    swcMinify: true,
-    esmExternals: true,
+  server: {
+    port: 3001,
   },
-
-  // Compression
-  compress: true,
-  poweredByHeader: false,
-  productionBrowserSourceMaps: false,
-  reactStrictMode: true,
+  webpack: (config, { buildId, dev, isServer, defaultLoaders, webpack }) => {
+    return config;
+  },
 }
 ```
 
 ### Middleware Configuration
 
-#### middleware.ts
-
 ```typescript
+// middleware.ts
 import { NextResponse } from 'next/server'
 import type { NextRequest } from 'next/server'
-import { withSecurityHeaders } from '@/lib/security'
 
 export function middleware(request: NextRequest) {
-  // Apply security headers to all routes
+  // Security headers
   const response = NextResponse.next()
-
+  
   // Add security headers
   response.headers.set('X-Frame-Options', 'DENY')
   response.headers.set('X-Content-Type-Options', 'nosniff')
   response.headers.set('X-XSS-Protection', '1; mode=block')
   response.headers.set('Referrer-Policy', 'strict-origin-when-cross-origin')
-
+  
   // Rate limiting for API routes
   if (request.nextUrl.pathname.startsWith('/api/')) {
     const rateLimit = checkRateLimit(request)
@@ -322,525 +390,82 @@ export function middleware(request: NextRequest) {
       return new NextResponse('Rate limit exceeded', { status: 429 })
     }
   }
-
+  
   return response
 }
 
 export const config = {
   matcher: [
-    /*
-     * Match all request paths except for the ones starting with:
-     * - api (API routes)
-     * - _next/static (static files)
-     * - _next/image (image optimization files)
-     * - favicon.ico (favicon file)
-     */
     '/((?!api|_next/static|_next/image|favicon.ico).*)',
   ],
 }
 ```
 
-### Security Configuration
+## Performance Configuration
 
-#### lib/security.ts
-
-The security configuration includes comprehensive protection mechanisms:
-
-```typescript
-// Input Validation Schemas
-export const securitySchemas = {
-  email: z.string()
-    .email('Invalid email address')
-    .min(3, 'Email too short')
-    .max(254, 'Email too long')
-    .transform(sanitizeEmail),
-
-  password: z.string()
-    .min(8, 'Password must be at least 8 characters')
-    .max(128, 'Password too long')
-    .regex(/^(?=.*[a-z])(?=.*[A-Z])(?=.*\\d)(?=.*[@$!%*?&])[A-Za-z\\d@$!%*?&]/,
-           'Password must contain uppercase, lowercase, number, and special character'),
-
-  apiKey: z.string()
-    .min(20, 'API key too short')
-    .max(100, 'API key too long')
-    .regex(/^[a-zA-Z0-9_-]+$/, 'API key contains invalid characters'),
-}
-
-// CSRF Protection
-export class CSRFProtection {
-  static generateToken(sessionId: string): string {
-    const timestamp = Date.now().toString()
-    const data = `${sessionId}:${timestamp}`
-    const signature = createHash('sha256')
-      .update(data + this.secret)
-      .digest('hex')
-
-    return Buffer.from(`${data}:${signature}`).toString('base64')
-  }
-
-  static validateToken(token: string, sessionId: string, maxAge = 3600000): boolean {
-    // Token validation logic
-  }
-}
-```
-
-## Database Configuration
-
-### Supabase Configuration
-
-#### Database Schema Setup
-
-```sql
--- Enable necessary extensions
-CREATE EXTENSION IF NOT EXISTS "uuid-ossp";
-CREATE EXTENSION IF NOT EXISTS "pgcrypto";
-CREATE EXTENSION IF NOT EXISTS vector;
-
--- Set up Row Level Security
-ALTER TABLE users ENABLE ROW LEVEL SECURITY;
-ALTER TABLE agents ENABLE ROW LEVEL SECURITY;
-ALTER TABLE conversations ENABLE ROW LEVEL SECURITY;
-
--- Create indexes for performance
-CREATE INDEX idx_users_email ON users(email);
-CREATE INDEX idx_agents_user_id ON agents(user_id);
-CREATE INDEX idx_conversations_status ON conversations(status);
-CREATE INDEX idx_conversations_updated_at ON conversations(updated_at);
-```
-
-#### Connection Pooling
+### Memory Optimization
 
 ```bash
-# Supabase Connection Pooling Settings
+# Node.js Memory Settings
+NODE_OPTIONS="--max-old-space-size=4096"
+NODE_OPTIONS="$NODE_OPTIONS --expose-gc --max-semi-space-size=64"
+
+# CPU Settings
+UV_THREADPOOL_SIZE=64
+```
+
+### Connection Pooling
+
+```bash
+# Database connection pooling
 DB_POOL_MIN=2
 DB_POOL_MAX=20
 DB_POOL_IDLE_TIMEOUT=300
 DB_POOL_CONNECTION_TIMEOUT=30
+
+# Redis connection pooling
+REDIS_POOL_SIZE=20
+REDIS_POOL_MIN=2
 ```
 
-### Redis Configuration
-
-#### Redis Setup
+### CDN Configuration
 
 ```bash
-# Redis Configuration File (/etc/redis/redis.conf)
-maxmemory 1gb
-maxmemory-policy allkeys-lru
-save 900 1
-save 300 10
-save 60 10000
-appendonly yes
-appendfsync everysec
+# Static asset optimization
+CDN_ENABLED=true
+CDN_URL=https://cdn.yourdomain.com
+ASSET_PREFIX=https://cdn.yourdomain.com
 ```
 
-#### Redis Security
+## Multi-Tenant Configuration
 
 ```bash
-# Redis Password Protection
-requirepass your_redis_password
+# Multi-tenant settings
+MULTI_TENANT_ENABLED=true
+TENANT_ISOLATION_STRICT=true
+TENANT_DATA_SHARING=false
 
-# Network Security
-bind 127.0.0.1
-protected-mode yes
-
-# Disable dangerous commands
-rename-command FLUSHDB ""
-rename-command FLUSHALL ""
-rename-command SHUTDOWN SHUTDOWN_REDIS
+# Tenant-specific configurations
+TENANT_DEFAULT_LIMITS=1000
+TENANT_ENTERPRISE_LIMITS=10000
 ```
 
-## Performance Configuration
-
-### Application Performance
-
-#### Memory Optimization
+## Feature Flags
 
 ```bash
-# Node.js Memory Settings
-NODE_OPTIONS="--max-old-space-size=4096 --optimize-for-size --memory-reducer"
-
-# Garbage Collection
-NODE_OPTIONS="$NODE_OPTIONS --expose-gc --max-semi-space-size=64"
-```
-
-#### CPU Optimization
-
-```bash
-# CPU Settings for production
-NODE_OPTIONS="$NODE_OPTIONS --max-old-space-size=4096"
-UV_THREADPOOL_SIZE=64
-```
-
-### Database Performance
-
-#### Query Optimization
-
-```sql
--- Create optimized indexes
-CREATE INDEX CONCURRENTLY idx_conversations_user_status_updated
-ON conversations(user_id, status, updated_at DESC);
-
-CREATE INDEX CONCURRENTLY idx_knowledge_base_embedding
-ON knowledge_base USING ivfflat (embedding vector_cosine_ops)
-WITH (lists = 100);
-
--- Partition large tables
-CREATE TABLE conversations_y2024m01 PARTITION OF conversations
-FOR VALUES FROM ('2024-01-01') TO ('2024-02-01');
-```
-
-#### Connection Pooling
-
-```bash
-# PgBouncer Configuration
-[databases]
-prismai = host=localhost port=5432 dbname=prismai
-
-[pgbouncer]
-pool_mode = transaction
-listen_port = 6432
-listen_addr = 127.0.0.1
-auth_type = md5
-auth_file = /etc/pgbouncer/userlist.txt
-max_client_conn = 1000
-default_pool_size = 20
-min_pool_size = 5
-```
-
-### Caching Configuration
-
-#### Application Cache
-
-```typescript
-// Cache Configuration
-export const cacheConfig = {
-  ttl: {
-    short: 300,      // 5 minutes
-    medium: 3600,    // 1 hour
-    long: 86400,     // 24 hours
-    session: 3600,   // 1 hour
-  },
-  keys: {
-    agents: 'agents:list',
-    knowledgeBase: 'kb:search',
-    analytics: 'analytics:data',
-    user: 'user:profile',
-  },
-  redis: {
-    host: process.env.REDIS_HOST || 'localhost',
-    port: parseInt(process.env.REDIS_PORT || '6379'),
-    password: process.env.REDIS_PASSWORD,
-    db: parseInt(process.env.REDIS_DB || '0'),
-  },
-}
-```
-
-## Security Configuration
-
-### SSL/TLS Configuration
-
-#### Certificate Configuration
-
-```bash
-# Let's Encrypt Configuration
-SSL_CERT_PATH=/etc/letsencrypt/live/yourdomain.com/fullchain.pem
-SSL_KEY_PATH=/etc/letsencrypt/live/yourdomain.com/privkey.pem
-SSL_CHAIN_PATH=/etc/letsencrypt/live/yourdomain.com/chain.pem
-
-# Custom Certificate
-SSL_CERT_PATH=/etc/ssl/certs/yourdomain.com.crt
-SSL_KEY_PATH=/etc/ssl/private/yourdomain.com.key
-```
-
-#### HSTS Configuration
-
-```bash
-# HTTP Strict Transport Security
-HSTS_MAX_AGE=31536000
-HSTS_INCLUDE_SUBDOMAINS=true
-HSTS_PRELOAD=true
-```
-
-### Firewall Configuration
-
-#### UFW Configuration
-
-```bash
-# Enable UFW
-sudo ufw enable
-
-# Allow necessary ports
-sudo ufw allow ssh
-sudo ufw allow https
-sudo ufw allow http
-
-# Allow specific IPs for admin access
-sudo ufw allow from 192.168.1.0/24 to any port 22
-
-# Rate limiting
-sudo ufw limit ssh
-```
-
-#### iptables Configuration
-
-```bash
-# Basic iptables rules
-iptables -A INPUT -p tcp --dport 22 -m state --state NEW -m recent --set
-iptables -A INPUT -p tcp --dport 22 -m state --state NEW -m recent --update --seconds 60 --hitcount 4 -j DROP
-
-# Allow established connections
-iptables -A INPUT -m state --state ESTABLISHED,RELATED -j ACCEPT
-
-# Drop invalid packets
-iptables -A INPUT -m state --state INVALID -j DROP
-```
-
-### API Security
-
-#### Rate Limiting Configuration
-
-```typescript
-// Rate Limiting Rules
-export const rateLimitConfig = {
-  windowMs: 15 * 60 * 1000, // 15 minutes
-  max: {
-    login: 5,           // 5 login attempts
-    api: 100,          // 100 API requests
-    upload: 10,        // 10 file uploads
-    search: 50,        // 50 search requests
-  },
-  skipSuccessfulRequests: false,
-  skipFailedRequests: false,
-}
-```
-
-#### CORS Configuration
-
-```typescript
-// CORS Settings
-export const corsConfig = {
-  origin: process.env.NODE_ENV === 'production'
-    ? ['https://yourdomain.com', 'https://app.yourdomain.com']
-    : ['http://localhost:3000', 'http://localhost:3001'],
-  credentials: true,
-  methods: ['GET', 'POST', 'PUT', 'PATCH', 'DELETE', 'OPTIONS'],
-  allowedHeaders: [
-    'Content-Type',
-    'Authorization',
-    'X-CSRF-Token',
-    'X-Requested-With',
-    'Accept',
-    'Origin',
-  ],
-}
-```
-
-## Monitoring Configuration
-
-### Health Checks
-
-#### Application Health
-
-```typescript
-// Health Check Configuration
-export const healthCheckConfig = {
-  path: '/api/v1/health',
-  timeout: 10000,
-  retries: 3,
-  checks: {
-    database: true,
-    redis: true,
-    aiServices: true,
-    externalApis: true,
-  },
-}
-```
-
-#### Database Health
-
-```sql
--- Database health check query
-SELECT
-  'database' as component,
-  'healthy' as status,
-  NOW() as timestamp;
-```
-
-### Metrics Collection
-
-#### Prometheus Configuration
-
-```yaml
-# Prometheus scraping configuration
-scrape_configs:
-  - job_name: 'prismai'
-    static_configs:
-      - targets: ['localhost:3000']
-    scrape_interval: 15s
-    metrics_path: '/api/v1/metrics'
-```
-
-#### Grafana Dashboards
-
-```json
-{
-  "dashboard": {
-    "title": "PrismAI Performance",
-    "panels": [
-      {
-        "title": "Active Conversations",
-        "type": "stat",
-        "targets": [
-          {
-            "expr": "prismai_active_conversations",
-            "legendFormat": "Active"
-          }
-        ]
-      },
-      {
-        "title": "API Response Time",
-        "type": "graph",
-        "targets": [
-          {
-            "expr": "rate(prismai_api_response_time_seconds_sum[5m]) / rate(prismai_api_response_time_seconds_count[5m])",
-            "legendFormat": "Average Response Time"
-          }
-        ]
-      }
-    ]
-  }
-}
-```
-
-## Logging Configuration
-
-### Application Logging
-
-#### Winston Configuration
-
-```typescript
-// Logging Configuration
-export const loggerConfig = {
-  level: process.env.LOG_LEVEL || 'info',
-  format: winston.format.combine(
-    winston.format.timestamp(),
-    winston.format.errors({ stack: true }),
-    winston.format.json()
-  ),
-  defaultMeta: { service: 'prismai' },
-  transports: [
-    new winston.transports.File({
-      filename: 'logs/error.log',
-      level: 'error',
-      maxsize: 10485760, // 10MB
-      maxFiles: 10,
-    }),
-    new winston.transports.File({
-      filename: 'logs/combined.log',
-      maxsize: 10485760,
-      maxFiles: 10,
-    }),
-  ],
-}
-```
-
-#### Log Rotation
-
-```bash
-# Logrotate Configuration
-/app/logs/*.log {
-    daily
-    missingok
-    rotate 30
-    compress
-    delaycompress
-    notifempty
-    create 644 ubuntu ubuntu
-    postrotate
-        systemctl reload prismai
-    endscript
-}
-```
-
-### Security Logging
-
-#### Security Event Logging
-
-```typescript
-// Security Event Types
-export const securityEvents = {
-  AUTHENTICATION_FAILURE: 'auth_failure',
-  AUTHORIZATION_FAILURE: 'auth_failure',
-  SUSPICIOUS_ACTIVITY: 'suspicious_activity',
-  RATE_LIMIT_EXCEEDED: 'rate_limit_exceeded',
-  CSRF_VIOLATION: 'csrf_violation',
-  SQL_INJECTION_ATTEMPT: 'sql_injection_attempt',
-  XSS_ATTEMPT: 'xss_attempt',
-  INVALID_REQUEST: 'invalid_request',
-}
-```
-
-## Backup Configuration
-
-### Database Backup
-
-#### Automated Backup Script
-
-```bash
-#!/bin/bash
-# Database backup script
-
-BACKUP_DIR="/backups/database"
-DATE=$(date +%Y%m%d_%H%M%S)
-RETENTION_DAYS=30
-
-# Create backup directory
-mkdir -p $BACKUP_DIR
-
-# Backup database
-supabase db dump --db-url "$DATABASE_URL" --file "$BACKUP_DIR/backup_$DATE.sql"
-
-# Compress backup
-gzip "$BACKUP_DIR/backup_$DATE.sql"
-
-# Clean old backups
-find $BACKUP_DIR -name "*.sql.gz" -mtime +$RETENTION_DAYS -delete
-```
-
-#### Backup Schedule
-
-```bash
-# Crontab for automated backups
-# Database backup every 6 hours
-0 */6 * * * /app/scripts/backup_database.sh
-
-# File backup daily at 2 AM
-0 2 * * * /app/scripts/backup_files.sh
-
-# Log rotation daily at 3 AM
-0 3 * * * /app/scripts/rotate_logs.sh
-```
-
-### File System Backup
-
-#### File Backup Configuration
-
-```bash
-# Backup directories
-BACKUP_PATHS=(
-  "/app/uploads"
-  "/app/public"
-  "/app/logs"
-  "/etc/ssl/certs"
-)
-
-# Backup script
-for path in "${BACKUP_PATHS[@]}"; do
-  if [ -d "$path" ]; then
-    tar -czf "/backups/files/$(basename $path)_$DATE.tar.gz" "$path"
-  fi
-done
+# Feature toggles
+FEATURE_AI_CHAT_ENABLED=true
+FEATURE_VOICE_AI_ENABLED=true
+FEATURE_FILE_UPLOAD_ENABLED=true
+FEATURE_SURVEYS_ENABLED=true
+FEATURE_QUALITY_SCORING_ENABLED=true
+FEATURE_LEAD_ROUTING_ENABLED=true
+FEATURE_ANALYTICS_EXPORT=true
+
+# Beta features
+BETA_VISUAL_WORKFLOW_BUILDER=false
+BETA_ADVANCED_AI_INSIGHTS=false
+BETA_ENTERPRISE_INTEGRATIONS=false
 ```
 
 ## Environment-Specific Configuration
@@ -851,16 +476,20 @@ done
 # Development Settings
 NODE_ENV=development
 NEXT_PUBLIC_APP_URL=http://localhost:3000
-DEBUG=true
 LOG_LEVEL=debug
+ENABLE_REQUEST_LOGGING=true
 
 # Development Database
-DATABASE_URL=postgresql://localhost:5432/prismai_dev
 SUPABASE_URL=http://localhost:54321
+DATABASE_URL=postgresql://postgres:password@localhost:54322/postgres
 
-# Development AI Services
+# Development AI Services (use test keys)
 GEMINI_API_KEY=your_dev_gemini_key
+VAPI_API_KEY=your_dev_vapi_key
 ELEVENLABS_API_KEY=your_dev_elevenlabs_key
+
+# Rate limits (more permissive for development)
+RATE_LIMIT_MAX_REQUESTS=1000
 ```
 
 ### Staging Environment
@@ -870,13 +499,15 @@ ELEVENLABS_API_KEY=your_dev_elevenlabs_key
 NODE_ENV=staging
 NEXT_PUBLIC_APP_URL=https://staging.yourdomain.com
 LOG_LEVEL=info
+ENABLE_REQUEST_LOGGING=true
 
 # Staging Database
+SUPABASE_URL=https://your-staging-project.supabase.co
 DATABASE_URL=postgresql://staging-db.yourdomain.com:5432/prismai_staging
 
 # Staging AI Services (limited quotas)
 GEMINI_API_KEY=your_staging_gemini_key
-RATE_LIMIT_MAX_REQUESTS=50
+RATE_LIMIT_MAX_REQUESTS=500
 ```
 
 ### Production Environment
@@ -886,12 +517,18 @@ RATE_LIMIT_MAX_REQUESTS=50
 NODE_ENV=production
 NEXT_PUBLIC_APP_URL=https://yourdomain.com
 LOG_LEVEL=warn
+ENABLE_REQUEST_LOGGING=false
 
 # Production Database
+SUPABASE_URL=https://your-prod-project.supabase.co
 DATABASE_URL=postgresql://prod-db.yourdomain.com:5432/prismai
 
 # Production AI Services
 GEMINI_API_KEY=your_prod_gemini_key
+VAPI_API_KEY=your_prod_vapi_key
+ELEVENLABS_API_KEY=your_prod_elevenlabs_key
+
+# Production rate limits
 RATE_LIMIT_MAX_REQUESTS=100
 ```
 
@@ -900,26 +537,23 @@ RATE_LIMIT_MAX_REQUESTS=100
 ### Environment Validation
 
 ```typescript
-// Environment validation
+// Environment validation function
 export function validateEnvironment(): void {
   const requiredEnvVars = [
-    'DATABASE_URL',
     'SUPABASE_URL',
     'SUPABASE_SERVICE_ROLE_KEY',
-    'NEXTAUTH_SECRET',
     'GEMINI_API_KEY',
-    'TWILIO_ACCOUNT_SID',
-    'TWILIO_AUTH_TOKEN',
+    'VAPI_API_KEY',
   ]
-
+  
   const missing = requiredEnvVars.filter(key => !process.env[key])
-
+  
   if (missing.length > 0) {
     throw new Error(`Missing required environment variables: ${missing.join(', ')}`)
   }
-
+  
   // Validate URL formats
-  const urlVars = ['DATABASE_URL', 'SUPABASE_URL', 'NEXT_PUBLIC_APP_URL']
+  const urlVars = ['SUPABASE_URL', 'NEXT_PUBLIC_APP_URL']
   urlVars.forEach(key => {
     if (process.env[key] && !isValidUrl(process.env[key]!)) {
       throw new Error(`Invalid URL format for ${key}: ${process.env[key]}`)
@@ -935,18 +569,46 @@ export function validateEnvironment(): void {
 npm run test:config
 
 # Validate environment
-npm run validate:env
+node -e "require('./lib/env.ts'); console.log('Environment validation passed')"
 
 # Check database connectivity
 npm run db:health
 
 # Test external services
 npm run services:health
+
+# Validate security settings
+npm run security:audit
+```
+
+## Security Best Practices
+
+### Secret Management
+
+1. **Use environment variables for all secrets**
+2. **Never commit secrets to version control**
+3. **Use strong, unique secrets for each environment**
+4. **Rotate secrets regularly**
+5. **Use a secrets management service in production**
+
+### Environment Variable Security
+
+```bash
+# .env file should be 600 permissions
+chmod 600 .env
+
+# .env should be in .gitignore
+echo ".env" >> .gitignore
+
+# Use different secrets for each environment
+NODE_ENV=production
+JWT_SECRET_PROD=production_jwt_secret
+JWT_SECRET_STAGING=staging_jwt_secret
 ```
 
 ## Troubleshooting Configuration
 
-### Common Configuration Issues
+### Common Issues
 
 #### Environment Variables Not Loading
 
@@ -964,55 +626,39 @@ node -e "require('dotenv').config(); console.log('Environment loaded successfull
 #### Database Connection Issues
 
 ```bash
-# Test database connection
-psql $DATABASE_URL -c "SELECT 1;"
+# Test Supabase connection
+curl -H "apikey: $SUPABASE_SERVICE_ROLE_KEY" \
+     -H "Authorization: Bearer $SUPABASE_SERVICE_ROLE_KEY" \
+     "$SUPABASE_URL/rest/v1/"
 
-# Check connection pool
-psql $DATABASE_URL -c "SELECT count(*) FROM pg_stat_activity WHERE state = 'active';"
-
-# Verify credentials
-psql $DATABASE_URL -c "SELECT current_user, current_database();"
+# Test direct database connection
+psql "$DATABASE_URL" -c "SELECT 1;"
 ```
 
-#### SSL Certificate Issues
+#### API Keys Validation
 
 ```bash
-# Check certificate validity
-openssl x509 -in /etc/ssl/certs/yourdomain.com.crt -text -noout
+# Test Gemini API key
+curl -H "Content-Type: application/json" \
+     -H "x-goog-api-key: $GEMINI_API_KEY" \
+     "https://generativelanguage.googleapis.com/v1/models"
 
-# Test SSL connection
-curl -v https://yourdomain.com
-
-# Check certificate chain
-openssl s_client -connect yourdomain.com:443 -servername yourdomain.com
+# Test VAPI API key
+curl -H "Authorization: Bearer $VAPI_API_KEY" \
+     "https://api.vapi.ai/speech-model"
 ```
 
-### Configuration Debugging
-
-#### Debug Mode
+### Debug Configuration
 
 ```bash
 # Enable debug logging
 DEBUG=prismai:* npm start
 
-# Enable verbose output
-VERBOSE=true npm start
+# Show configuration (sanitized)
+npm run config:safe-display
 
-# Show configuration (without secrets)
-npm run config:debug
+# Test all external services
+npm run services:test-all
 ```
 
-#### Performance Profiling
-
-```bash
-# Profile application startup
-node --prof server.js
-
-# Memory usage analysis
-node --inspect server.js
-
-# CPU profiling
-clinic doctor -- node server.js
-```
-
-This configuration manual provides comprehensive guidance for setting up and maintaining the PrismAI platform across different environments with best practices for security, performance, and reliability.
+This configuration manual provides comprehensive guidance for setting up and maintaining the PrismAI Platform across different environments with best practices for security, performance, and reliability.

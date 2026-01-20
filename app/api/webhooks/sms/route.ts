@@ -79,7 +79,7 @@ export const POST = withErrorHandling(async (request: NextRequest) => {
   }
 
   // Check for existing language preference
-  let { data: langPref } = await supabase
+  const { data: langPref } = await supabase
     .from('customer_language_preferences')
     .select('preferred_language')
     .eq('user_id', userId)

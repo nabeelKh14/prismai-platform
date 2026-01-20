@@ -94,6 +94,17 @@ export const useConversation = (conversationId: string) => {
     }
   }, [conversationId])
 
+  // Cleanup previous EventSource when conversationId changes
+  useEffect(() => {
+    return () => {
+      if (eventSourceRef.current) {
+        eventSourceRef.current.close()
+        eventSourceRef.current = null
+      }
+    }
+  }, [conversationId])
+
+  // Set up real-time updates
   // Set up real-time updates
   useEffect(() => {
     if (!conversationId) return
@@ -141,6 +152,10 @@ export const useConversation = (conversationId: string) => {
       setError('Real-time connection lost')
     }
 
+    return () => {
+      eventSource.close()
+      eventSourceRef.current = null
+    }
     return () => {
       eventSource.close()
     }

@@ -111,7 +111,7 @@ export class AdequacyDecisionsService {
       const requiresAdditionalSafeguards = decision.adequacyStatus === 'partially_adequate' ||
                                            decision.restrictions.length > 0
 
-      let recommendations: string[] = []
+      const recommendations: string[] = []
       if (!isAdequate) {
         recommendations.push('Use Standard Contractual Clauses (SCCs) for transfers to this country')
         recommendations.push('Perform Transfer Impact Assessment (TIA) before transferring data')

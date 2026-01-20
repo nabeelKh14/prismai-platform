@@ -416,7 +416,7 @@ export const GET = withErrorHandling(async (request: NextRequest) => {
   const type = searchParams.get('type') // 'email', 'social', 'workflow'
   const status = searchParams.get('status')
 
-  let results: { emailCampaigns?: any[]; socialPosts?: any[]; workflows?: any[] } = {}
+  const results: { emailCampaigns?: any[]; socialPosts?: any[]; workflows?: any[] } = {}
 
   if (!type || type === 'email') {
     let emailQuery = supabase

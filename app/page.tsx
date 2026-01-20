@@ -39,42 +39,7 @@ import DotGrid from '@/components/DotGrid'
 
 export default function HomePage() {
   return (
-    <div className="min-h-screen" style={{backgroundColor: '#0B0B0D'}}>
-      {/* Navigation */}
-      <nav className="border-b border-cyan-500/20 backdrop-blur supports-[backdrop-filter]:bg-[#0B0B0D]/60 sticky top-0 z-50" style={{backgroundColor: '#0B0B0D'}}>
-        <div className="container mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="flex justify-between items-center h-16">
-            <div className="flex items-center space-x-2">
-              <div className="w-8 h-8 bg-primary rounded-lg flex items-center justify-center">
-                <Phone className="h-4 w-4 text-primary-foreground" />
-              </div>
-              <span className="text-xl font-bold text-foreground">PrismAI</span>
-            </div>
-
-            <div className="hidden md:flex items-center space-x-8">
-              <Link href="/features" className="text-gray-300 hover:text-cyan-400 transition-colors duration-200">
-                Features
-              </Link>
-              <Link href="/demo" className="text-gray-300 hover:text-cyan-400 transition-colors duration-200">
-                Demo
-              </Link>
-              <Link href="/pricing" className="text-gray-300 hover:text-cyan-400 transition-colors duration-200">
-                Pricing
-              </Link>
-              <Link href="/auth/login" className="text-gray-300 hover:text-white transition-colors duration-200">
-                Login
-              </Link>
-              <Button 
-                className="bg-gradient-to-r from-cyan-500 to-pink-500 hover:from-cyan-600 hover:to-pink-600 text-white shadow-md hover:shadow-lg transition-all duration-200 transform hover:scale-105"
-                asChild
-              >
-                <Link href="/auth/sign-up">Get Started</Link>
-              </Button>
-            </div>
-          </div>
-        </div>
-      </nav>
-
+    <div className="min-h-screen" style={{ backgroundColor: '#0B0B0D' }}>
       {/* Interactive dot-grid background */}
       <DotGrid
         dotSize={2}
@@ -88,9 +53,8 @@ export default function HomePage() {
         className="fixed inset-0 z-0"
         style={{ opacity: 0.6 }}
       />
-
       {/* Hero Section */}
-      <section className="py-24 lg:py-40 relative overflow-hidden" style={{backgroundColor: '#0B0B0D'}}>
+      <section className="py-24 lg:py-40 relative overflow-hidden" style={{ backgroundColor: '#0B0B0D' }}>
         {/* Premium Background Effects */}
         <div className="absolute inset-0 gradient-premium" />
         <div className="absolute inset-0 bg-gradient-to-br from-cyan-500/8 via-transparent to-pink-500/8" />
@@ -98,8 +62,8 @@ export default function HomePage() {
 
         {/* Floating Elements */}
         <div className="absolute top-20 left-10 w-32 h-32 bg-cyan-500/10 rounded-full blur-xl animate-float" />
-        <div className="absolute bottom-20 right-10 w-40 h-40 bg-pink-500/8 rounded-full blur-2xl animate-float" style={{animationDelay: '2s'}} />
-        <div className="absolute top-1/2 left-1/4 w-24 h-24 bg-cyan-500/5 rounded-full blur-lg animate-float" style={{animationDelay: '4s'}} />
+        <div className="absolute bottom-20 right-10 w-40 h-40 bg-pink-500/8 rounded-full blur-2xl animate-float" style={{ animationDelay: '2s' }} />
+        <div className="absolute top-1/2 left-1/4 w-24 h-24 bg-cyan-500/5 rounded-full blur-lg animate-float" style={{ animationDelay: '4s' }} />
 
 
         <div className="container mx-auto px-4 sm:px-6 lg:px-8 relative z-10">
@@ -112,8 +76,8 @@ export default function HomePage() {
             </div>
 
             {/* Main Headline */}
-            <h1 className="premium-heading text-5xl md:text-7xl lg:text-8xl text-balance leading-tight mb-8 text-white animate-fade-in-up" style={{animationDelay: '0.2s'}}>
-              
+            <h1 className="premium-heading text-5xl md:text-7xl lg:text-8xl text-balance leading-tight mb-8 text-white animate-fade-in-up" style={{ animationDelay: '0.2s' }}>
+
               <span className="text-gradient">
                 Prism AI Consultancy
               </span>
@@ -121,17 +85,17 @@ export default function HomePage() {
             </h1>
 
             {/* Subheadline */}
-            <p className="premium-subheading text-xl md:text-2xl text-gray-300 text-pretty leading-relaxed max-w-4xl mx-auto mb-10 animate-fade-in-up" style={{animationDelay: '0.4s'}}>
+            <p className="premium-subheading text-xl md:text-2xl text-gray-300 text-pretty leading-relaxed max-w-4xl mx-auto mb-10 animate-fade-in-up" style={{ animationDelay: '0.4s' }}>
               Transform your customer interactions with intelligent voice agents that handle receptionist duties, customer service, and chatbot conversations 24/7.
             </p>
 
             {/* Supporting line */}
-            <p className="text-lg text-gray-400 mb-16 max-w-3xl mx-auto animate-fade-in-up" style={{animationDelay: '0.6s'}}>
+            <p className="text-lg text-gray-400 mb-16 max-w-3xl mx-auto animate-fade-in-up" style={{ animationDelay: '0.6s' }}>
               From receptionist to customer service to intelligent chatbots - our AI voice agents handle every customer interaction with human-like precision.
             </p>
 
             {/* Premium CTAs */}
-            <div className="flex flex-col sm:flex-row gap-8 justify-center items-center mb-20 animate-fade-in-up" style={{animationDelay: '0.8s'}}>
+            <div className="flex flex-col sm:flex-row gap-8 justify-center items-center mb-20 animate-fade-in-up" style={{ animationDelay: '0.8s' }}>
               <Button
                 size="lg"
                 className="btn-premium text-lg px-12 py-5 h-auto text-white font-semibold rounded-2xl group animate-fade-in-left"
@@ -157,10 +121,10 @@ export default function HomePage() {
               </Button>
             </div>
 
-            
+
 
             {/* Key Features */}
-            <div className="mt-20 animate-fade-in-up" style={{animationDelay: '1s'}}>
+            <div className="mt-20 animate-fade-in-up" style={{ animationDelay: '1s' }}>
               <h3 className="text-2xl md:text-3xl font-bold text-white text-center mb-12">Complete AI Receptionist Suite</h3>
               <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 max-w-5xl mx-auto">
                 <div className="glass rounded-2xl p-6 hover-glow transition-all duration-300">
@@ -209,7 +173,7 @@ export default function HomePage() {
             </div>
 
             {/* Premium Stats */}
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-8 max-w-4xl mx-auto animate-fade-in-up" style={{animationDelay: '1.1s'}}>
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-8 max-w-4xl mx-auto animate-fade-in-up" style={{ animationDelay: '1.1s' }}>
               <div className="glass rounded-2xl p-6 hover-glow transition-all duration-300">
                 <div className="text-3xl font-bold text-gradient-cyan mb-2">99.9%</div>
                 <div className="text-gray-300 font-medium">Uptime Guarantee</div>
@@ -231,7 +195,7 @@ export default function HomePage() {
       </section>
 
       {/* Problem Section */}
-      <section className="py-20 relative overflow-hidden" style={{backgroundColor: '#0B0B0D'}}>
+      <section className="py-20 relative overflow-hidden" style={{ backgroundColor: '#0B0B0D' }}>
         {/* Premium Background */}
         <div className="absolute inset-0 gradient-premium opacity-20" />
         <div className="absolute inset-0 bg-gradient-to-r from-red-500/5 via-transparent to-orange-500/5" />
@@ -242,17 +206,17 @@ export default function HomePage() {
               <X className="h-4 w-4 text-red-400" />
               <span className="text-sm font-medium text-red-300">The Hidden Costs</span>
             </div>
-            <h2 className="premium-heading text-4xl md:text-5xl mb-6 text-white animate-fade-in-up" style={{animationDelay: '0.2s'}}>
+            <h2 className="premium-heading text-4xl md:text-5xl mb-6 text-white animate-fade-in-up" style={{ animationDelay: '0.2s' }}>
               The True Cost of{" "}
               <span className="text-gradient">Compromised Client Experience</span>
             </h2>
-            <p className="premium-subheading text-xl text-gray-300 max-w-3xl mx-auto animate-fade-in-up" style={{animationDelay: '0.4s'}}>
+            <p className="premium-subheading text-xl text-gray-300 max-w-3xl mx-auto animate-fade-in-up" style={{ animationDelay: '0.4s' }}>
               Every missed call represents more than lost revenue — it's a breach of the exceptional service your clients expect
             </p>
           </div>
 
           <div className="grid md:grid-cols-3 gap-8 max-w-5xl mx-auto">
-            <div className="card-premium p-8 text-center animate-fade-in-up hover-lift" style={{animationDelay: '0.6s'}}>
+            <div className="card-premium p-8 text-center animate-fade-in-up hover-lift" style={{ animationDelay: '0.6s' }}>
               <div className="flex items-center justify-center w-20 h-20 bg-red-500/20 rounded-2xl mx-auto mb-6">
                 <X className="h-10 w-10 text-red-400" />
               </div>
@@ -262,7 +226,7 @@ export default function HomePage() {
               </p>
             </div>
 
-            <div className="card-premium p-8 text-center animate-fade-in-up hover-lift" style={{animationDelay: '0.8s'}}>
+            <div className="card-premium p-8 text-center animate-fade-in-up hover-lift" style={{ animationDelay: '0.8s' }}>
               <div className="flex items-center justify-center w-20 h-20 bg-orange-500/20 rounded-2xl mx-auto mb-6">
                 <Clock className="h-10 w-10 text-orange-400" />
               </div>
@@ -272,7 +236,7 @@ export default function HomePage() {
               </p>
             </div>
 
-            <div className="card-premium p-8 text-center animate-fade-in-up hover-lift" style={{animationDelay: '1s'}}>
+            <div className="card-premium p-8 text-center animate-fade-in-up hover-lift" style={{ animationDelay: '1s' }}>
               <div className="flex items-center justify-center w-20 h-20 bg-yellow-500/20 rounded-2xl mx-auto mb-6">
                 <TrendingUp className="h-10 w-10 text-yellow-400" />
               </div>
@@ -286,7 +250,7 @@ export default function HomePage() {
       </section>
 
       {/* Solution Section */}
-      <section className="py-24 relative overflow-hidden" style={{backgroundColor: '#0B0B0D'}}>
+      <section className="py-24 relative overflow-hidden" style={{ backgroundColor: '#0B0B0D' }}>
         {/* Premium Background */}
         <div className="absolute inset-0 gradient-premium opacity-30" />
         <div className="absolute inset-0 bg-gradient-to-b from-transparent via-green-500/5 to-transparent" />
@@ -297,15 +261,15 @@ export default function HomePage() {
               <CheckCircle className="h-4 w-4 text-green-400" />
               <span className="text-sm font-medium text-green-300">The Solution</span>
             </div>
-            <h2 className="premium-heading text-4xl md:text-5xl lg:text-6xl mb-6 text-white animate-fade-in-up" style={{animationDelay: '0.2s'}}>
+            <h2 className="premium-heading text-4xl md:text-5xl lg:text-6xl mb-6 text-white animate-fade-in-up" style={{ animationDelay: '0.2s' }}>
               Your Dedicated{" "}
               <span className="text-gradient">AI Executive Assistant</span>
             </h2>
-            <p className="premium-subheading text-xl text-gray-300 max-w-4xl mx-auto mb-8 animate-fade-in-up" style={{animationDelay: '0.4s'}}>
+            <p className="premium-subheading text-xl text-gray-300 max-w-4xl mx-auto mb-8 animate-fade-in-up" style={{ animationDelay: '0.4s' }}>
               Our bespoke AI concierge service delivers the sophistication and attention to detail your discerning clients expect — with the reliability and precision only AI can provide.
             </p>
 
-            <div className="glass rounded-2xl p-4 max-w-2xl mx-auto animate-fade-in-up" style={{animationDelay: '0.6s'}}>
+            <div className="glass rounded-2xl p-4 max-w-2xl mx-auto animate-fade-in-up" style={{ animationDelay: '0.6s' }}>
               <div className="flex items-center justify-center gap-3">
                 <TrendingUp className="h-5 w-5 text-cyan-400" />
                 <span className="text-cyan-300 font-medium">Premium clients report 40% improvement in service satisfaction within 30 days</span>
@@ -314,7 +278,7 @@ export default function HomePage() {
           </div>
 
           <div className="grid md:grid-cols-3 gap-8 max-w-5xl mx-auto">
-            <div className="card-premium p-8 text-center animate-fade-in-up hover-lift" style={{animationDelay: '0.8s'}}>
+            <div className="card-premium p-8 text-center animate-fade-in-up hover-lift" style={{ animationDelay: '0.8s' }}>
               <div className="flex items-center justify-center w-20 h-20 bg-cyan-500/20 rounded-2xl mx-auto mb-6">
                 <BarChart3 className="h-10 w-10 text-cyan-400" />
               </div>
@@ -324,7 +288,7 @@ export default function HomePage() {
               </p>
             </div>
 
-            <div className="card-premium p-8 text-center animate-fade-in-up hover-lift" style={{animationDelay: '1s'}}>
+            <div className="card-premium p-8 text-center animate-fade-in-up hover-lift" style={{ animationDelay: '1s' }}>
               <div className="flex items-center justify-center w-20 h-20 bg-pink-500/20 rounded-2xl mx-auto mb-6">
                 <Calendar className="h-10 w-10 text-pink-400" />
               </div>
@@ -334,7 +298,7 @@ export default function HomePage() {
               </p>
             </div>
 
-            <div className="card-premium p-8 text-center animate-fade-in-up hover-lift" style={{animationDelay: '1.2s'}}>
+            <div className="card-premium p-8 text-center animate-fade-in-up hover-lift" style={{ animationDelay: '1.2s' }}>
               <div className="flex items-center justify-center w-20 h-20 bg-cyan-500/20 rounded-2xl mx-auto mb-6">
                 <Globe className="h-10 w-10 text-cyan-400" />
               </div>
@@ -349,7 +313,7 @@ export default function HomePage() {
 
 
       {/* Integrations & Tech Stack */}
-      <section className="py-16" style={{backgroundColor: '#0B0B0D'}}>
+      <section className="py-16" style={{ backgroundColor: '#0B0B0D' }}>
         <div className="container mx-auto px-4 sm:px-6 lg:px-8">
           <div className="text-center mb-12">
             <h2 className="text-3xl md:text-4xl font-bold mb-4 text-white">Integrates With Your Existing Tools</h2>
@@ -366,35 +330,35 @@ export default function HomePage() {
               </div>
               <span className="text-sm font-medium text-gray-300">Google Calendar</span>
             </div>
-            
+
             <div className="flex flex-col items-center gap-2">
               <div className="w-12 h-12 bg-gradient-to-br from-pink-500/20 to-purple-500/20 rounded-lg flex items-center justify-center border border-pink-500/30">
                 <Users className="h-6 w-6 text-pink-400" />
               </div>
               <span className="text-sm font-medium text-gray-300">HubSpot</span>
             </div>
-            
+
             <div className="flex flex-col items-center gap-2">
               <div className="w-12 h-12 bg-gradient-to-br from-cyan-500/20 to-blue-500/20 rounded-lg flex items-center justify-center border border-cyan-500/30">
                 <Building className="h-6 w-6 text-cyan-400" />
               </div>
               <span className="text-sm font-medium text-gray-300">Salesforce</span>
             </div>
-            
+
             <div className="flex flex-col items-center gap-2">
               <div className="w-12 h-12 bg-gradient-to-br from-pink-500/20 to-purple-500/20 rounded-lg flex items-center justify-center border border-pink-500/30">
                 <Headphones className="h-6 w-6 text-pink-400" />
               </div>
               <span className="text-sm font-medium text-gray-300">Zendesk</span>
             </div>
-            
+
             <div className="flex flex-col items-center gap-2">
               <div className="w-12 h-12 bg-gradient-to-br from-cyan-500/20 to-blue-500/20 rounded-lg flex items-center justify-center border border-cyan-500/30">
                 <FileText className="h-6 w-6 text-cyan-400" />
               </div>
               <span className="text-sm font-medium text-gray-300">Notion</span>
             </div>
-            
+
             <div className="flex flex-col items-center gap-2">
               <div className="w-12 h-12 bg-gradient-to-br from-pink-500/20 to-purple-500/20 rounded-lg flex items-center justify-center border border-pink-500/30">
                 <Settings className="h-6 w-6 text-pink-400" />
@@ -418,10 +382,10 @@ export default function HomePage() {
 
 
 
-    
+
 
       {/* Footer - Premium Design */}
-      <footer className="relative overflow-hidden" style={{backgroundColor: '#0B0B0D'}}>
+      <footer className="relative overflow-hidden" style={{ backgroundColor: '#0B0B0D' }}>
         {/* Premium Background */}
         <div className="absolute inset-0 gradient-premium opacity-10" />
         <div className="absolute inset-0 bg-gradient-to-t from-gray-900/20 to-transparent" />

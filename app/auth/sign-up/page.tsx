@@ -1,6 +1,6 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
 import { useForm } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
@@ -33,7 +33,18 @@ export default function SignUpPage() {
   const [isLoading, setIsLoading] = useState(false)
   const router = useRouter()
   const { toast } = useToast()
-  const supabase = createClient()
+  // Environment variable validation and Supabase client creation
+  const [supabase, setSupabase] = useState<any>(null)
+  const [envError, setEnvError] = useState<string | null>(null)
+
+  useEffect(() => {
+    try {
+      const client = createClient()
+      setSupabase(client)
+    } catch (error) {
+      setEnvError('Environment configuration error. Please check your setup.')
+    }
+  }, [])
 
   const form = useForm<SignUpForm>({
     resolver: zodResolver(signUpSchema),
@@ -47,6 +58,8 @@ export default function SignUpPage() {
   })
 
   const onSubmit = async (data: SignUpForm) => {
+    if (!supabase) return
+
     setIsLoading(true)
 
     try {
@@ -86,6 +99,8 @@ export default function SignUpPage() {
   }
 
   const handleGoogleSignIn = async () => {
+    if (!supabase) return
+
     setIsLoading(true)
 
     try {
@@ -114,8 +129,23 @@ export default function SignUpPage() {
     }
   }
 
+  if (envError) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-gray-50 dark:bg-gray-900 px-4">
+        <Card className="w-full max-w-md">
+          <CardHeader>
+            <CardTitle className="text-2xl font-bold text-center text-red-500">Configuration Error</CardTitle>
+            <CardDescription className="text-center">
+              {envError}
+            </CardDescription>
+          </CardHeader>
+        </Card>
+      </div>
+    )
+  }
+
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gray-50 dark:bg-gray-900 px-4">
+    <div className="min-h-screen flex items-center justify-center bg-slate-950 px-4">
       {/* Interactive dot-grid background */}
       <DotGrid
         dotSize={2}
@@ -129,10 +159,15 @@ export default function SignUpPage() {
         className="fixed inset-0 z-0"
         style={{ opacity: 0.6 }}
       />
-      <Card className="w-full max-w-md">
+
+      {/* Background Effects */}
+      <div className="absolute inset-0 bg-gradient-to-br from-cyan-500/8 via-transparent to-pink-500/8 opacity-20" />
+      <div className="absolute inset-0 bg-gradient-to-br from-cyan-500/8 via-transparent to-pink-500/8" />
+
+      <Card className="w-full max-w-md bg-white/5 backdrop-blur-xl border-white/10 shadow-lg relative z-10">
         <CardHeader className="space-y-1">
-          <CardTitle className="text-2xl font-bold text-center">Create Account</CardTitle>
-          <CardDescription className="text-center">
+          <CardTitle className="text-2xl font-bold text-center text-white">Create Account</CardTitle>
+          <CardDescription className="text-center text-gray-400">
             Enter your information to create your account
           </CardDescription>
         </CardHeader>
@@ -140,9 +175,9 @@ export default function SignUpPage() {
           <Button
             type="button"
             variant="outline"
-            className="w-full"
+            className="w-full bg-white/5 backdrop-blur-xl border-white/10 hover:bg-white/10 text-white"
             onClick={handleGoogleSignIn}
-            disabled={isLoading}
+            disabled={isLoading || !supabase}
           >
             <Chrome className="mr-2 h-4 w-4" />
             {isLoading ? 'Signing In...' : 'Continue with Google'}
@@ -150,10 +185,10 @@ export default function SignUpPage() {
 
           <div className="relative my-6">
             <div className="absolute inset-0 flex items-center">
-              <span className="w-full border-t" />
+              <span className="w-full border-t border-white/10" />
             </div>
             <div className="relative flex justify-center text-xs uppercase">
-              <span className="bg-background px-2 text-muted-foreground">Or continue with</span>
+              <span className="bg-slate-950 px-2 text-gray-400">Or continue with</span>
             </div>
           </div>
 
@@ -165,12 +200,13 @@ export default function SignUpPage() {
                   name="firstName"
                   render={({ field }) => (
                     <FormItem>
-                      <FormLabel>First Name</FormLabel>
+                      <FormLabel className="text-white">First Name</FormLabel>
                       <FormControl>
                         <Input
                           placeholder="John"
+                          className="bg-white/5 border-white/10 text-white placeholder:text-gray-400"
                           {...field}
-                          disabled={isLoading}
+                          disabled={isLoading || !supabase}
                         />
                       </FormControl>
                       <FormMessage />
@@ -183,12 +219,13 @@ export default function SignUpPage() {
                   name="lastName"
                   render={({ field }) => (
                     <FormItem>
-                      <FormLabel>Last Name</FormLabel>
+                      <FormLabel className="text-white">Last Name</FormLabel>
                       <FormControl>
                         <Input
                           placeholder="Doe"
+                          className="bg-white/5 border-white/10 text-white placeholder:text-gray-400"
                           {...field}
-                          disabled={isLoading}
+                          disabled={isLoading || !supabase}
                         />
                       </FormControl>
                       <FormMessage />
@@ -202,13 +239,14 @@ export default function SignUpPage() {
                 name="email"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>Email</FormLabel>
+                    <FormLabel className="text-white">Email</FormLabel>
                     <FormControl>
                       <Input
                         type="email"
                         placeholder="john.doe@example.com"
+                        className="bg-white/5 border-white/10 text-white placeholder:text-gray-400"
                         {...field}
-                        disabled={isLoading}
+                        disabled={isLoading || !supabase}
                       />
                     </FormControl>
                     <FormMessage />
@@ -221,13 +259,14 @@ export default function SignUpPage() {
                 name="password"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>Password</FormLabel>
+                    <FormLabel className="text-white">Password</FormLabel>
                     <FormControl>
                       <Input
                         type="password"
                         placeholder="Enter your password"
+                        className="bg-white/5 border-white/10 text-white placeholder:text-gray-400"
                         {...field}
-                        disabled={isLoading}
+                        disabled={isLoading || !supabase}
                       />
                     </FormControl>
                     <FormMessage />
@@ -240,13 +279,14 @@ export default function SignUpPage() {
                 name="confirmPassword"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>Confirm Password</FormLabel>
+                    <FormLabel className="text-white">Confirm Password</FormLabel>
                     <FormControl>
                       <Input
                         type="password"
                         placeholder="Confirm your password"
+                        className="bg-white/5 border-white/10 text-white placeholder:text-gray-400"
                         {...field}
-                        disabled={isLoading}
+                        disabled={isLoading || !supabase}
                       />
                     </FormControl>
                     <FormMessage />
@@ -254,18 +294,18 @@ export default function SignUpPage() {
                 )}
               />
 
-              <Button type="submit" className="w-full" disabled={isLoading}>
+              <Button type="submit" className="w-full bg-gradient-to-r from-cyan-400 to-pink-400 hover:from-cyan-500 hover:to-pink-500 text-white shadow-lg" disabled={isLoading || !supabase}>
                 {isLoading ? 'Creating Account...' : 'Create Account'}
               </Button>
             </form>
           </Form>
 
           <div className="mt-6 text-center">
-            <p className="text-sm text-gray-600 dark:text-gray-400">
+            <p className="text-sm text-gray-400">
               Already have an account?{' '}
               <Link
                 href="/auth/login"
-                className="font-medium text-primary hover:underline"
+                className="font-medium text-cyan-400 hover:text-cyan-300 transition-colors"
               >
                 Sign in
               </Link>

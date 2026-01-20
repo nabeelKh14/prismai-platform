@@ -136,7 +136,7 @@ class MCPClient {
    */
   async request(serverName: string, request: MCPRequest): Promise<MCPResponse> {
     const startTime = Date.now()
-    let cacheHit = false
+    const cacheHit = false
     let dataSize = 0
 
     const server = this.servers.get(serverName)

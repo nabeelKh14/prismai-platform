@@ -1,7 +1,6 @@
 import { logger } from '@/lib/logger'
 import { alertingSystem } from './alerting-system'
 import { performanceMonitor } from './performance-monitor'
-import { systemMetricsCollector } from './system-metrics-collector'
 import { notificationService } from './notification-service'
 import { businessMetricsTracker } from './business-metrics-tracker'
 import { monitoringSecurity } from './security-wrapper'
@@ -15,7 +14,6 @@ export interface MonitoringConfig {
   enable_security_monitoring: boolean
   enable_business_metrics: boolean
   enable_performance_monitoring: boolean
-  enable_system_monitoring: boolean
   notification_channels: string[]
   alert_thresholds: Record<string, number>
 }
@@ -23,7 +21,6 @@ export interface MonitoringConfig {
 export interface SystemHealthStatus {
   overall: 'healthy' | 'warning' | 'critical'
   components: {
-    system: 'healthy' | 'warning' | 'critical'
     database: 'healthy' | 'warning' | 'critical'
     api: 'healthy' | 'warning' | 'critical'
     security: 'healthy' | 'warning' | 'critical'
@@ -72,15 +69,10 @@ export class MonitoringOrchestrator {
       enable_security_monitoring: true,
       enable_business_metrics: true,
       enable_performance_monitoring: true,
-      enable_system_monitoring: true,
       notification_channels: ['email', 'slack', 'dashboard'],
       alert_thresholds: {
-        cpu_usage: 80,
-        memory_usage: 85,
         error_rate: 5,
-        response_time: 5000,
-        disk_usage: 90,
-        active_connections: 1000
+        response_time: 5000
       }
     }
   }
@@ -182,12 +174,6 @@ export class MonitoringOrchestrator {
     try {
       this.isRunning = true
 
-      // Start system metrics collection
-      if (this.config.enable_system_monitoring) {
-        systemMetricsCollector.startCollection()
-        logger.info('System metrics collection started')
-      }
-
       // Start periodic data collection
       this.collectionInterval = setInterval(() => {
         this.collectAllMetrics()
@@ -225,11 +211,6 @@ export class MonitoringOrchestrator {
 
     try {
       this.isRunning = false
-
-      // Stop system metrics collection
-      if (this.config.enable_system_monitoring) {
-        systemMetricsCollector.stopCollection()
-      }
 
       // Clear intervals
       if (this.collectionInterval) {
@@ -281,21 +262,6 @@ export class MonitoringOrchestrator {
     try {
       const timestamp = new Date().toISOString()
 
-      // Collect system metrics
-      if (this.config.enable_system_monitoring) {
-        const systemHealth = await systemMetricsCollector.getSystemHealth()
-
-        // Record system metrics
-        const systemMetrics = await systemMetricsCollector.collectNow()
-        await performanceMonitor.recordSystemMetric({
-          memory_usage_mb: systemMetrics.memoryUsage / (1024 * 1024),
-          memory_total_mb: systemMetrics.memoryTotal / (1024 * 1024),
-          cpu_usage_percent: systemMetrics.cpuUsage * 100,
-          active_connections: systemMetrics.activeConnections,
-          timestamp
-        })
-      }
-
       // Collect performance metrics
       if (this.config.enable_performance_monitoring) {
         // Performance metrics are collected automatically by middleware
@@ -346,9 +312,6 @@ export class MonitoringOrchestrator {
     try {
       const timestamp = new Date()
 
-      // Get system health
-      const systemHealth = await systemMetricsCollector.getSystemHealth()
-
       // Get database health (simplified)
       const databaseHealth = 'healthy' // Would check actual database connection
 
@@ -370,7 +333,7 @@ export class MonitoringOrchestrator {
       if (businessStats.count < 10) businessHealth = 'warning' // Low activity
 
       // Determine overall health
-      const components = { system: systemHealth.status, database: databaseHealth as 'healthy' | 'warning' | 'critical', api: apiHealth, security: securityHealth, business: businessHealth }
+      const components = { database: databaseHealth as 'healthy' | 'warning' | 'critical', api: apiHealth, security: securityHealth, business: businessHealth }
       const criticalCount = Object.values(components).filter(s => s === 'critical').length
       const warningCount = Object.values(components).filter(s => s === 'warning').length
 
@@ -405,7 +368,6 @@ export class MonitoringOrchestrator {
       return {
         overall: 'critical',
         components: {
-          system: 'critical',
           database: 'critical',
           api: 'critical',
           security: 'critical',
@@ -452,7 +414,6 @@ export class MonitoringOrchestrator {
         is_running: this.isRunning,
         config: this.config,
         components_status: {
-          system_monitoring: this.config.enable_system_monitoring,
           performance_monitoring: this.config.enable_performance_monitoring,
           security_monitoring: this.config.enable_security_monitoring,
           business_metrics: this.config.enable_business_metrics,
@@ -478,7 +439,6 @@ export class MonitoringOrchestrator {
         last_health_check: {
           overall: 'critical',
           components: {
-            system: 'critical',
             database: 'critical',
             api: 'critical',
             security: 'critical',
@@ -521,8 +481,6 @@ export class MonitoringOrchestrator {
       clearInterval(this.healthCheckInterval)
       this.healthCheckInterval = null
     }
-
-    systemMetricsCollector.stopCollection()
 
     logger.warn('Monitoring orchestrator emergency stopped')
   }

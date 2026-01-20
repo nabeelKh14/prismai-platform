@@ -48,7 +48,6 @@ export class MemoryOptimizer {
       ...config
     }
 
-    this.startMemoryMonitoring()
     this.startCleanupTask()
   }
 
@@ -403,40 +402,6 @@ export class MemoryOptimizer {
     return bytes
   }
 
-  /**
-   * Start memory monitoring
-   */
-  private startMemoryMonitoring(): void {
-    setInterval(() => {
-      const stats = this.getMemoryStats()
-
-      // Record metrics
-      if (this.config.enableMetrics) {
-        performanceMonitor.recordSystemMetric({
-          memory_usage_mb: stats.used,
-          memory_total_mb: stats.total,
-          cpu_usage_percent: 0, // Would need actual CPU monitoring
-          active_connections: 0, // Would need connection tracking
-          timestamp: new Date().toISOString()
-        })
-      }
-
-      // Trigger GC if above threshold
-      if (this.config.enableGCOnThreshold && stats.used > this.config.memoryThresholdMB) {
-        logger.warn('Memory usage above threshold, triggering GC', {
-          used: stats.used,
-          threshold: this.config.memoryThresholdMB
-        })
-
-        this.forceGarbageCollection()
-      }
-
-      // Log if memory usage is high
-      if (stats.usagePercent > 80) {
-        logger.warn('High memory usage detected', stats)
-      }
-    }, 30000) // Every 30 seconds
-  }
 
   /**
    * Start cleanup task

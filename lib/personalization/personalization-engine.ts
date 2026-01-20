@@ -105,6 +105,7 @@ export interface ContentTemplate {
   personalizationTags: string[]
 }
 
+  parameters: Record<string, unknown>
 export interface ActionTemplate {
   type: 'send_message' | 'schedule_call' | 'create_task' | 'update_lead' | 'trigger_workflow'
   parameters: Record<string, any>
@@ -112,6 +113,7 @@ export interface ActionTemplate {
 
 export interface StageCondition {
   type: 'time_elapsed' | 'engagement_score' | 'lead_score' | 'behavior_pattern' | 'custom'
+  value: unknown
   operator: 'equals' | 'greater_than' | 'less_than' | 'contains' | 'not_contains'
   value: any
 }
@@ -190,6 +192,7 @@ export class PersonalizationEngine {
    * Process lead behavior and trigger personalization actions
    */
   async processLeadBehavior(
+    behaviorData: Record<string, unknown>,
     leadId: string,
     behaviorType: string,
     behaviorData: Record<string, any>,
@@ -364,6 +367,7 @@ export class PersonalizationEngine {
     }
   }
 
+    behaviorData: Record<string, unknown>,
   private async updateLeadProfile(
     leadId: string,
     behaviorType: string,
@@ -1160,7 +1164,7 @@ export class PersonalizationEngine {
       if (!sequence) return
 
       // Evaluate conditions to determine next stage
-      let nextStageIndex = stageIndex + 1
+      const nextStageIndex = stageIndex + 1
 
       for (const condition of stage.conditions || []) {
         const isMet = await this.evaluateStageCondition(sequence.lead_id, condition, userId)

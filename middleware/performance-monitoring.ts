@@ -44,29 +44,6 @@ export class PerformanceMonitoringMiddleware {
     }
   }
 
-  static async recordSystemMetrics(): Promise<void> {
-    try {
-      // Only record system metrics on server-side (not in Edge Runtime)
-      if (typeof process !== 'undefined' && process.memoryUsage && process.cpuUsage) {
-        const memUsage = process.memoryUsage()
-        const cpuUsage = process.cpuUsage()
-
-        const memoryUsageMB = Math.round(memUsage.heapUsed / 1024 / 1024)
-        const memoryTotalMB = Math.round(memUsage.heapTotal / 1024 / 1024)
-        const cpuUsagePercent = Math.round((cpuUsage.user + cpuUsage.system) / 1000000)
-
-        await performanceMonitor.recordSystemMetric({
-          memory_usage_mb: memoryUsageMB,
-          memory_total_mb: memoryTotalMB,
-          cpu_usage_percent: cpuUsagePercent,
-          active_connections: 0, // TODO: Track active connections
-          timestamp: new Date().toISOString()
-        })
-      }
-    } catch (error) {
-      logger.error('Failed to record system metrics', { error })
-    }
-  }
 
   private static getClientIP(request: NextRequest): string | undefined {
     // Try different headers for client IP
@@ -94,21 +71,8 @@ export class PerformanceMonitoringMiddleware {
 let metricsInterval: NodeJS.Timeout | null = null
 
 export function startSystemMetricsCollection(intervalMinutes: number = 5): void {
-  if (metricsInterval) {
-    clearInterval(metricsInterval)
-  }
-
-  // Only start system metrics collection on server-side
-  if (typeof setInterval !== 'undefined') {
-    const intervalMs = intervalMinutes * 60 * 1000
-
-    metricsInterval = setInterval(async () => {
-      await PerformanceMonitoringMiddleware.recordSystemMetrics()
-    }, intervalMs)
-  }
-
-  // Record initial metrics
-  PerformanceMonitoringMiddleware.recordSystemMetrics()
+  // System metrics collection has been removed
+  logger.info('System metrics collection is no longer available')
 }
 
 export function stopSystemMetricsCollection(): void {

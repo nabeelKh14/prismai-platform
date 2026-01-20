@@ -1,6 +1,5 @@
 import { createClient } from "@/lib/supabase/server"
 import { NextRequest, NextResponse } from "next/server"
-import { systemMetricsCollector } from "@/lib/monitoring/system-metrics-collector"
 
 export async function GET(request: NextRequest) {
   try {
@@ -11,8 +10,17 @@ export async function GET(request: NextRequest) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
     }
 
-    // Get system health from the collector
-    const systemHealth = await systemMetricsCollector.getSystemHealth()
+    // Basic system health check without system metrics collector
+    const systemHealth = {
+      status: 'healthy',
+      metrics: {
+        uptime: process.uptime(),
+        memory: process.memoryUsage(),
+        cpu: process.cpuUsage(),
+        timestamp: new Date().toISOString()
+      },
+      issues: []
+    }
 
     return NextResponse.json(systemHealth)
   } catch (error) {

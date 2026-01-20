@@ -82,21 +82,6 @@ describe('Performance Optimization Tests', () => {
       expect(metric.rows_affected).toBe(10)
     })
 
-    it('should record system metrics', async () => {
-      const metric = {
-        memory_usage_mb: 512,
-        memory_total_mb: 1024,
-        cpu_usage_percent: 45,
-        active_connections: 25,
-        timestamp: new Date().toISOString()
-      }
-
-      await performanceMonitor.recordSystemMetric(metric)
-
-      expect(metric.memory_usage_mb).toBe(512)
-      expect(metric.cpu_usage_percent).toBe(45)
-      expect(metric.active_connections).toBe(25)
-    })
 
     it('should get aggregated stats', async () => {
       const stats = await performanceMonitor.getAggregatedStats('api_response', '24h')
@@ -208,23 +193,12 @@ describe('Performance Optimization Tests', () => {
         timestamp: new Date().toISOString()
       })
 
-      // Record system metric
-      await performanceMonitor.recordSystemMetric({
-        memory_usage_mb: 256,
-        memory_total_mb: 512,
-        cpu_usage_percent: 30,
-        active_connections: 10,
-        timestamp: new Date().toISOString()
-      })
-
       // Get aggregated stats
       const apiStats = await performanceMonitor.getAggregatedStats('api_response', '1h')
       const dbStats = await performanceMonitor.getAggregatedStats('database_query', '1h')
-      const systemStats = await performanceMonitor.getAggregatedStats('memory_usage', '1h')
 
       expect(apiStats).toHaveProperty('count')
       expect(dbStats).toHaveProperty('count')
-      expect(systemStats).toHaveProperty('count')
     })
 
     it('should handle cache performance under load', async () => {

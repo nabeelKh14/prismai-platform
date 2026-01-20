@@ -29,6 +29,11 @@ export function useAIAssistant() {
     try {
       setIsLoading(true)
       const response = await fetch("/api/ai/assistant")
+
+      if (!response.ok) {
+        throw new Error("Failed to fetch config")
+      }
+
       const data = await response.json()
 
       if (data.config) {

@@ -159,9 +159,6 @@ export class DatabasePerformanceMonitor {
         lastChecked: timestamp
       }
 
-      // Record health metrics
-      await this.recordHealthMetrics(healthMetrics)
-
       return healthMetrics
 
     } catch (error) {
@@ -488,15 +485,6 @@ export class DatabasePerformanceMonitor {
     }
   }
 
-  private async recordHealthMetrics(metrics: DatabaseHealthMetrics): Promise<void> {
-    await performanceMonitor.recordSystemMetric({
-      memory_usage_mb: 0, // Would be populated from actual system metrics
-      memory_total_mb: 0,
-      cpu_usage_percent: 0,
-      active_connections: metrics.activeConnections,
-      timestamp: metrics.lastChecked
-    })
-  }
 
   private async cleanupOldAlerts(): Promise<void> {
     try {

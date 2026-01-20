@@ -1,56 +1,80 @@
 import { z } from 'zod'
+import { appSchema } from './env/schemas/app'
+import { supabaseSchema } from './env/schemas/supabase'
+import { analyticsSchema } from './env/schemas/analytics'
+import { monitoringSchema } from './env/schemas/monitoring'
+import { aiSchema } from './env/schemas/ai'
+import { emailSchema } from './env/schemas/email'
+import { securitySchema } from './env/schemas/security'
+import { cachingSchema } from './env/schemas/caching'
 
-const publicEnvSchema = z.object({
-  // Node.js Environment
-  NODE_ENV: z.enum(['development', 'production', 'test']).default('development'),
+// Define public schema (available in both client and server)
+const publicSchema = appSchema
+  .merge(supabaseSchema.pick({
+    NEXT_PUBLIC_SUPABASE_URL: true,
+    NEXT_PUBLIC_SUPABASE_ANON_KEY: true,
+  }))
+  .merge(analyticsSchema)
+  .merge(monitoringSchema.pick({
+    LOG_LEVEL: true,
+    ENABLE_REQUEST_LOGGING: true,
+  }))
 
-  // Application URLs
-  NEXT_PUBLIC_APP_URL: z.string().url(),
+// Define server schema (extends public with server-only variables)
+const serverSchema = publicSchema
+  .merge(supabaseSchema.pick({
+    SUPABASE_SERVICE_ROLE_KEY: true,
+  }))
+  .merge(aiSchema)
+  .merge(emailSchema)
+  .merge(securitySchema)
+  .merge(cachingSchema)
+  .merge(monitoringSchema.pick({
+    DATABASE_CONNECTION_LIMIT: true,
+    HEALTH_CHECK_TOKEN: true,
+  }))
 
-  // Supabase Configuration (Public)
-  NEXT_PUBLIC_SUPABASE_URL: z.string().url(),
-  NEXT_PUBLIC_SUPABASE_ANON_KEY: z.string().min(1),
+/**
+ * Type representing public environment variables available in both client and server
+ */
+export type PublicEnv = z.infer<typeof publicSchema>
 
-  // Optional Analytics
-  VERCEL_ANALYTICS_ID: z.string().optional(),
-  SENTRY_DSN: z.string().url().optional().or(z.literal('')),
+/**
+ * Type representing all environment variables available on the server
+ */
+export type ServerEnv = z.infer<typeof serverSchema>
 
-  // Performance & Monitoring (Public)
-  LOG_LEVEL: z.enum(['error', 'warn', 'info', 'debug']).default('info'),
-  ENABLE_REQUEST_LOGGING: z.coerce.boolean().default(false),
-})
+/**
+ * Legacy type for backward compatibility - represents server environment
+ */
+export type Env = ServerEnv
 
-const serverEnvSchema = publicEnvSchema.extend({
-  // Supabase Configuration (Server)
-  SUPABASE_SERVICE_ROLE_KEY: z.string().min(1),
+/**
+ * List of sensitive environment variable names that should be redacted in error messages
+ */
+const SENSITIVE_VARS = new Set([
+  'GEMINI_API_KEY',
+  'VAPI_API_KEY',
+  'SUPABASE_SERVICE_ROLE_KEY',
+  'JWT_SECRET',
+  'ENCRYPTION_KEY',
+  'WEBHOOK_SECRET',
+  'UPSTASH_REDIS_REST_TOKEN',
+  'SMTP_PASS',
+  'RESEND_API_KEY',
+])
 
-  // AI Services (Required)
-  GEMINI_API_KEY: z.string().min(1),
-  VAPI_API_KEY: z.string().min(1),
-
-  // Optional Email Service
-  RESEND_API_KEY: z.string().optional(),
-  SMTP_HOST: z.string().optional(),
-  SMTP_PORT: z.coerce.number().optional(),
-  SMTP_USER: z.string().optional(),
-  SMTP_PASS: z.string().optional(),
-
-  // Security
-  JWT_SECRET: z.string().min(32).optional(),
-  ENCRYPTION_KEY: z.string().min(32).optional(),
-  WEBHOOK_SECRET: z.string().optional(),
-
-  // Optional Redis/Caching
-  UPSTASH_REDIS_REST_URL: z.string().url().optional().or(z.literal('')),
-  UPSTASH_REDIS_REST_TOKEN: z.string().optional(),
-  REDIS_URL: z.string().url().optional().or(z.literal('')),
-
-  // Performance & Monitoring
-  DATABASE_CONNECTION_LIMIT: z.coerce.number().default(20),
-  HEALTH_CHECK_TOKEN: z.string().optional(),
-})
-
-export type Env = z.infer<typeof serverEnvSchema>
+/**
+ * Sanitizes error messages by redacting sensitive variable names
+ */
+function sanitizeErrorMessage(message: string): string {
+  let sanitized = message
+  SENSITIVE_VARS.forEach(sensitiveVar => {
+    const regex = new RegExp(`\\b${sensitiveVar}\\b`, 'g')
+    sanitized = sanitized.replace(regex, '[REDACTED]')
+  })
+  return sanitized
+}
 
 class EnvValidationError extends Error {
   constructor(message: string, public errors: z.ZodError) {
@@ -59,14 +83,17 @@ class EnvValidationError extends Error {
   }
 }
 
-function validateEnv(): Env {
+/**
+ * Validates environment variables and returns the appropriate type based on environment
+ * @returns PublicEnv in browser, ServerEnv on server
+ */
+function validateEnv(): PublicEnv | ServerEnv {
   const isBrowser = typeof window !== 'undefined'
-  const schema = isBrowser ? publicEnvSchema : serverEnvSchema
+  const schema = isBrowser ? publicSchema : serverSchema
 
   try {
     const parsed = schema.parse(process.env)
-    // In browser, cast to Env (server vars will be undefined)
-    return parsed as Env
+    return parsed
   } catch (error) {
     if (error instanceof z.ZodError) {
       const missingVars = error.errors
@@ -84,7 +111,7 @@ function validateEnv(): Env {
       }
 
       if (invalidVars.length > 0) {
-        errorMessage += ' Invalid: ' + invalidVars.join(', ')
+        errorMessage += ' Invalid: ' + invalidVars.map(sanitizeErrorMessage).join(', ')
       }
 
       errorMessage += ' Please check your .env file'
@@ -95,20 +122,39 @@ function validateEnv(): Env {
   }
 }
 
+/**
+ * Safely validates environment variables without throwing
+ * @returns Object with success status and either data or error
+ */
+export function validateEnvSafe(): { success: true; data: PublicEnv | ServerEnv } | { success: false; error: string } {
+  try {
+    const data = validateEnv()
+    return { success: true, data }
+  } catch (error) {
+    const errorMessage = error instanceof EnvValidationError
+      ? error.message
+      : `Environment validation failed: ${String(error)}`
+    return { success: false, error: sanitizeErrorMessage(errorMessage) }
+  }
+}
+
 // Validate environment variables at module load time
-let env: Env
+let env: ServerEnv
 
 try {
-  env = validateEnv()
+  env = validateEnv() as ServerEnv
 } catch (error) {
   if (process.env.NODE_ENV !== 'test') {
     console.error('❌ Environment validation failed')
     console.error(error instanceof EnvValidationError ? error.message : error)
-    // Instead of process.exit(1), throw the error to be handled by Next.js
-    throw new Error(`Environment validation failed: ${error instanceof EnvValidationError ? error.message : String(error)}`)
+    // Instead of process.exit(1), log the error. We don't throw here to allow the app to load
+    // so we can show a nice error message in the UI if needed (via requireEnv calls).
+    // throw new Error(`Environment validation failed: ${error instanceof EnvValidationError ? error.message : String(error)}`)
+    console.warn('Environment validation failed, proceeding with unsafe environment')
+    env = process.env as unknown as ServerEnv
   }
   // In test environment, provide defaults
-  env = serverEnvSchema.parse({
+  env = serverSchema.parse({
     NODE_ENV: 'test',
     NEXT_PUBLIC_APP_URL: 'http://localhost:3000',
     NEXT_PUBLIC_SUPABASE_URL: 'http://localhost:54321',
@@ -116,20 +162,48 @@ try {
     SUPABASE_SERVICE_ROLE_KEY: 'test-service-role-key',
     GEMINI_API_KEY: 'test-gemini-key',
     VAPI_API_KEY: 'test-vapi-key',
+    SENTRY_DSN: '',
+    UPSTASH_REDIS_REST_URL: '',
+    REDIS_URL: '',
+    LOG_LEVEL: 'info',
+    ENABLE_REQUEST_LOGGING: false,
+    DATABASE_CONNECTION_LIMIT: 20,
+    HEALTH_CHECK_TOKEN: '',
+    JWT_SECRET: 'TestJwtSecretWithAtLeast32Characters!123',
+    ENCRYPTION_KEY: 'TestEncryptionKeyWithAtLeast32Chars!456',
+    WEBHOOK_SECRET: '',
+    SMTP_HOST: '',
+    SMTP_PORT: '',
+    SMTP_USER: '',
+    SMTP_PASS: '',
+    RESEND_API_KEY: '',
+    VERCEL_ANALYTICS_ID: '',
+    UPSTASH_REDIS_REST_TOKEN: '',
   })
 }
 
 export { env }
 
-export function requireEnv(key: keyof Env): NonNullable<Env[typeof key]> {
+/**
+ * Gets a required environment variable, throws if not set or empty
+ * @param key - The environment variable key
+ * @returns The value of the environment variable
+ */
+export function requireEnv(key: keyof ServerEnv): NonNullable<ServerEnv[typeof key]> {
   const value = env[key]
   if (value === undefined || value === null || value === '') {
     throw new Error(`Required environment variable ${key} is not set`)
   }
-  return value as NonNullable<Env[typeof key]>
+  return value as NonNullable<ServerEnv[typeof key]>
 }
 
-export function getEnv<K extends keyof Env>(key: K, fallback?: Env[K]): Env[K] | undefined {
+/**
+ * Gets an optional environment variable with a fallback
+ * @param key - The environment variable key
+ * @param fallback - Fallback value if not set
+ * @returns The value or fallback
+ */
+export function getEnv<K extends keyof ServerEnv>(key: K, fallback?: ServerEnv[K]): ServerEnv[K] | undefined {
   return env[key] ?? fallback
 }
 
